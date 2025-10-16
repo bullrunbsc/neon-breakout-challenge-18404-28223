@@ -45,6 +45,7 @@ serve(async (req) => {
     }
 
     console.log("Game status:", gameData.status, "Round:", gameData.current_round);
+    console.log("Current time:", new Date().toISOString());
 
     const now = new Date();
     let action = "none";
@@ -90,20 +91,26 @@ serve(async (req) => {
 
     // Handle active round - check if expired
     if (gameData.status === "active" && gameData.current_round > 0) {
-      const { data: currentRoundData } = await supabase
+      console.log("Checking active round expiration...");
+      const { data: currentRoundData, error: roundError } = await supabase
         .from("rounds")
         .select("*")
         .eq("game_id", gameData.id)
         .eq("round_number", gameData.current_round)
         .single();
 
+      console.log("Round data:", currentRoundData, "Error:", roundError);
+
       if (currentRoundData) {
         const endTime = new Date(currentRoundData.ends_at);
+        console.log("Round ends at:", endTime.toISOString(), "Current time:", now.toISOString());
         
         if (now > endTime) {
           console.log("Round expired, processing eliminations");
           await checkAnswersAndEliminate(supabase, currentRoundData.id, currentRoundData.round_number, gameData);
           action = `processed_round_${currentRoundData.round_number}`;
+        } else {
+          console.log("Round still active, time remaining:", Math.ceil((endTime.getTime() - now.getTime()) / 1000), "seconds");
         }
       }
     }
