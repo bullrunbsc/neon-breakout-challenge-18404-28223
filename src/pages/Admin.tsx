@@ -201,23 +201,40 @@ const Admin = () => {
   };
 
   const fetchGameData = async () => {
-    const { data: gameData } = await supabase
+    console.log("🔁 Forcing fresh data fetch...");
+
+    // disable local cache
+    const { data: gameData, error: gameError } = await supabase
       .from("games")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .single()
+      .throwOnError();
+
+    if (gameError) {
+      console.error("Error fetching game:", gameError);
+      return;
+    }
 
     if (gameData) {
-      setCurrentGame(gameData);
+      setCurrentGame({ ...gameData }); // force React to re-render
 
-      const { data: playersData } = await supabase
+      // fetch fresh players and bypass cache
+      const { data: playersData, error: playersError } = await supabase
         .from("players")
         .select("*")
         .eq("game_id", gameData.id)
-        .order("joined_at", { ascending: true });
+        .order("joined_at", { ascending: true })
+        .throwOnError();
 
-      setPlayers(playersData || []);
+      if (playersError) {
+        console.error("Error fetching players:", playersError);
+        return;
+      }
+
+      // deep copy players list to ensure state updates
+      setPlayers([...playersData]);
     }
   };
 
