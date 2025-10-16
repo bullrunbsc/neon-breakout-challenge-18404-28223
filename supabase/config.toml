@@ -1,1 +1,4 @@
 project_id = "ptnsheniqitolomryvqu"
+
+[functions.game-progression]
+verify_jwt = false
