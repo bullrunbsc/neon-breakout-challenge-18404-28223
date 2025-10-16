@@ -244,13 +244,17 @@ const Game = () => {
             return;
           }
           
-          // Skip all updates if player has submitted
-          if (hasSubmittedRef.current) {
-            console.log("Skipping game update - player already submitted");
-            return;
+          const newGame = payload.new as any;
+          const oldGame = payload.old as any;
+          
+          // Reset submission state when round number changes (new round started)
+          if (newGame?.current_round !== oldGame?.current_round) {
+            console.log("Round changed from", oldGame?.current_round, "to", newGame?.current_round, "- resetting submission state");
+            setHasSubmitted(false);
+            setSubmissionResult(null);
+            setSelectedButton(null);
           }
           
-          const newGame = payload.new as any;
           setGame(newGame);
           
           // Handle game finished status
@@ -303,12 +307,6 @@ const Game = () => {
             // Don't show new rounds to eliminated or winner players
             if (currentPlayer?.status === "eliminated" || currentPlayer?.status === "winner") {
               console.log("Player is eliminated/winner, not showing new round");
-              return;
-            }
-            
-            // Don't refresh if player already submitted (prevents glitching)
-            if (hasSubmittedRef.current) {
-              console.log("Player already submitted, skipping refresh to prevent glitching");
               return;
             }
             
