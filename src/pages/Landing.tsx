@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
-
 const CONTRACT_ADDRESS = "FFPMq7uQ4J26hDrjwHQHd9DhfdsUJmS6v3L4dzHTpump";
 const Landing = () => {
   const navigate = useNavigate();
@@ -28,35 +27,25 @@ const Landing = () => {
   useEffect(() => {
     // Fetch current game
     const fetchGame = async () => {
-      const { data } = await supabase
-        .from("games")
-        .select("*")
-        .order("created_at", {
-          ascending: false,
-        })
-        .limit(1)
-        .single();
+      const {
+        data
+      } = await supabase.from("games").select("*").order("created_at", {
+        ascending: false
+      }).limit(1).single();
       setCurrentGame(data);
     };
     fetchGame();
 
     // Subscribe to game changes
-    const channel = supabase
-      .channel("games-landing")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "games",
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
-            setCurrentGame(payload.new);
-          }
-        },
-      )
-      .subscribe();
+    const channel = supabase.channel("games-landing").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "games"
+    }, payload => {
+      if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+        setCurrentGame(payload.new);
+      }
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -64,13 +53,11 @@ const Landing = () => {
   useEffect(() => {
     // Fetch latest payouts
     const fetchPayouts = async () => {
-      const { data } = await supabase
-        .from("payouts")
-        .select("*")
-        .order("created_at", {
-          ascending: false,
-        })
-        .limit(5);
+      const {
+        data
+      } = await supabase.from("payouts").select("*").order("created_at", {
+        ascending: false
+      }).limit(5);
       if (data) {
         setPayouts(data);
       }
@@ -112,21 +99,20 @@ const Landing = () => {
     }
 
     // Check if already joined
-    const { data: existingPlayer } = await supabase
-      .from("players")
-      .select("*")
-      .eq("game_id", currentGame.id)
-      .eq("wallet_address", walletAddress)
-      .single();
+    const {
+      data: existingPlayer
+    } = await supabase.from("players").select("*").eq("game_id", currentGame.id).eq("wallet_address", walletAddress).single();
     if (existingPlayer) {
       navigate(`/game?gameId=${currentGame.id}&wallet=${walletAddress}`);
       return;
     }
 
     // Join game
-    const { error } = await supabase.from("players").insert({
+    const {
+      error
+    } = await supabase.from("players").insert({
       game_id: currentGame.id,
-      wallet_address: walletAddress,
+      wallet_address: walletAddress
     });
     if (error) {
       toast.error("Failed to join game");
@@ -136,8 +122,7 @@ const Landing = () => {
     toast.success("Joined game!");
     navigate(`/game?gameId=${currentGame.id}&wallet=${walletAddress}`);
   };
-  return (
-    <>
+  return <>
       {/* Arcade Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden bg-background">
         {/* Radial gradient glow */}
@@ -148,20 +133,18 @@ const Landing = () => {
         
         {/* Grid pattern */}
         <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(hsl(145 80% 50% / 0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(145 80% 50% / 0.03) 1px, transparent 1px)',
-          backgroundSize: '50px 50px'
-        }} />
+        backgroundImage: 'linear-gradient(hsl(145 80% 50% / 0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(145 80% 50% / 0.03) 1px, transparent 1px)',
+        backgroundSize: '50px 50px'
+      }} />
 
         {/* Animated neon lines */}
         <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-pulse-slow" />
-        <div
-          className="absolute top-1/2 right-0 w-1/2 h-px bg-gradient-to-l from-transparent via-accent/30 to-transparent"
-          style={{ animation: "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
-        />
-        <div
-          className="absolute bottom-1/3 left-1/4 w-1/3 h-px bg-gradient-to-r from-accent/30 via-transparent to-primary/30"
-          style={{ animation: "pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
-        />
+        <div className="absolute top-1/2 right-0 w-1/2 h-px bg-gradient-to-l from-transparent via-accent/30 to-transparent" style={{
+        animation: "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      }} />
+        <div className="absolute bottom-1/3 left-1/4 w-1/3 h-px bg-gradient-to-r from-accent/30 via-transparent to-primary/30" style={{
+        animation: "pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      }} />
 
         {/* Corner brackets */}
         <div className="absolute top-0 left-0 w-24 h-24 border-l-2 border-t-2 border-primary/30" />
@@ -171,10 +154,9 @@ const Landing = () => {
 
         {/* Floating neon particles */}
         <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-        <div
-          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl"
-          style={{ animation: "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
-        />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" style={{
+        animation: "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      }} />
       </div>
 
       {/* Single Screen Layout */}
@@ -183,15 +165,10 @@ const Landing = () => {
           {/* Title */}
           <div className="text-center space-y-5">
             <div className="relative inline-block">
-              <h1
-                className="text-8xl md:text-9xl font-black tracking-[-0.05em] text-foreground uppercase"
-                style={{ 
-                  textShadow: "0 0 80px hsl(145 80% 50% / 0.5), 0 0 40px hsl(145 80% 50% / 0.3)",
-                  fontFamily: "'Orbitron', 'Chakra Petch', 'Rajdhani', monospace"
-                }}
-              >
-                GUESS
-              </h1>
+              <h1 className="text-8xl md:text-9xl font-black tracking-[-0.05em] text-foreground uppercase" style={{
+              textShadow: "0 0 80px hsl(145 80% 50% / 0.5), 0 0 40px hsl(145 80% 50% / 0.3)",
+              fontFamily: "'Orbitron', 'Chakra Petch', 'Rajdhani', monospace"
+            }}>BUTTONS</h1>
               <div className="absolute -inset-12 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20 blur-3xl -z-10 animate-glow" />
             </div>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium tracking-wide">
@@ -204,96 +181,63 @@ const Landing = () => {
 
           {/* Game Status & Join Form */}
           <div className="max-w-md mx-auto space-y-6">
-            {!currentGame && (
-              <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
+            {!currentGame && <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
                 <span className="text-lg font-medium italic">No game is live right now</span>
                 <span className="text-xs">·</span>
-                <Button
-                  onClick={() => window.open("https://x.com/WinDoorz", "_blank")}
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105"
-                >
+                <Button onClick={() => window.open("https://x.com/WinDoorz", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current mr-2" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                   Follow us on X
                 </Button>
-              </div>
-            )}
+              </div>}
 
-            {currentGame?.status === "finished" && (
-              <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
+            {currentGame?.status === "finished" && <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
                 <span className="text-lg font-medium italic">No game is live right now</span>
                 <span className="text-xs">·</span>
-                <Button
-                  onClick={() => window.open("https://x.com/WinDoorz", "_blank")}
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105"
-                >
+                <Button onClick={() => window.open("https://x.com/WinDoorz", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current mr-2" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                   Follow us on X
                 </Button>
-              </div>
-            )}
+              </div>}
 
-            {currentGame?.status === "waiting" && (
-              <p className="text-lg text-muted-foreground animate-pulse-slow">Waiting for game to start...</p>
-            )}
+            {currentGame?.status === "waiting" && <p className="text-lg text-muted-foreground animate-pulse-slow">Waiting for game to start...</p>}
 
-            {currentGame?.status === "countdown" && countdown !== null && (
-              <div className="space-y-3">
+            {currentGame?.status === "countdown" && countdown !== null && <div className="space-y-3">
                 <p className="text-base text-muted-foreground">Game starts in</p>
-                <div
-                  className="text-7xl font-black tabular-nums"
-                  style={{ textShadow: "0 0 40px hsl(0 85% 58% / 0.3)" }}
-                >
+                <div className="text-7xl font-black tabular-nums" style={{
+              textShadow: "0 0 40px hsl(0 85% 58% / 0.3)"
+            }}>
                   {formatCountdown(countdown)}
                 </div>
-              </div>
-            )}
+              </div>}
 
-            {currentGame?.status === "active" && (
-              <div className="space-y-1">
+            {currentGame?.status === "active" && <div className="space-y-1">
                 <p className="text-xl font-bold">Game in progress</p>
                 <p className="text-base text-muted-foreground">
                   Round {currentGame.current_round} / {currentGame.total_rounds}
                 </p>
-              </div>
-            )}
+              </div>}
 
             {/* Join Form */}
-            {currentGame && (currentGame.status === "waiting" || currentGame.status === "countdown") && (
-              <div className="space-y-4">
+            {currentGame && (currentGame.status === "waiting" || currentGame.status === "countdown") && <div className="space-y-4">
                 <div className="space-y-2">
-                  <Input
-                    type="text"
-                    placeholder="Enter your wallet address"
-                    value={walletAddress}
-                    onChange={(e) => setWalletAddress(e.target.value)}
-                    className="w-full h-12 text-base bg-input/80 border-border/50 rounded-sm backdrop-blur-sm"
-                  />
+                  <Input type="text" placeholder="Enter your wallet address" value={walletAddress} onChange={e => setWalletAddress(e.target.value)} className="w-full h-12 text-base bg-input/80 border-border/50 rounded-sm backdrop-blur-sm" />
                   <p className="text-xs text-muted-foreground text-center leading-relaxed">
                     SUBMIT YOUR VALID WALLET ADDRESS, IF YOU WIN THE FEES ARE SENT THERE, IF THE WALLET IS NOT VALID THE
                     WIN DOESN'T COUNT
                   </p>
                 </div>
-                <Button
-                  onClick={handleJoinGame}
-                  className="relative w-full h-14 text-lg font-bold rounded-full overflow-hidden group border-2 border-primary/50"
-                  style={{
-                    background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
-                    boxShadow: "0 0 40px hsl(145 80% 50% / 0.4), 0 10px 60px -10px hsl(145 80% 50% / 0.6)",
-                  }}
-                >
+                <Button onClick={handleJoinGame} className="relative w-full h-14 text-lg font-bold rounded-full overflow-hidden group border-2 border-primary/50" style={{
+              background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
+              boxShadow: "0 0 40px hsl(145 80% 50% / 0.4), 0 10px 60px -10px hsl(145 80% 50% / 0.6)"
+            }}>
                   <span className="relative z-10 text-black font-black tracking-wider">ENTER GAME</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 </Button>
-              </div>
-            )}
+              </div>}
           </div>
 
           {/* Info Grid - Arcade Style */}
@@ -371,7 +315,7 @@ const Landing = () => {
                   <div className="flex items-start gap-4 p-4 rounded-lg bg-background/40 border border-accent/20">
                     <div className="w-2 h-2 rounded-full bg-accent mt-2 flex-shrink-0" />
                     <p className="text-muted-foreground leading-relaxed">
-                      <span className="text-foreground font-bold">If the winner doesn't hold $DOORZ:</span> 50% of the rewards are given
+                      <span className="text-foreground font-bold">If the winner doesn't hold $BUTTONS:</span> 50% of the rewards are given
                     </p>
                   </div>
                 </div>
@@ -386,18 +330,8 @@ const Landing = () => {
               <div className="relative space-y-4">
                 <h3 className="text-lg font-black text-foreground text-center uppercase tracking-wide">Contract Address</h3>
                 <div className="flex gap-3">
-                  <Input
-                    type="text"
-                    value={CONTRACT_ADDRESS}
-                    readOnly
-                    className="flex-1 h-12 bg-input/60 text-muted-foreground text-xs font-mono border-2 border-border/50 rounded-lg backdrop-blur-sm"
-                  />
-                  <Button
-                    onClick={handleCopyAddress}
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 border-2 border-primary/30 hover:border-primary hover:bg-primary/20 hover:text-primary transition-all rounded-lg"
-                  >
+                  <Input type="text" value={CONTRACT_ADDRESS} readOnly className="flex-1 h-12 bg-input/60 text-muted-foreground text-xs font-mono border-2 border-border/50 rounded-lg backdrop-blur-sm" />
+                  <Button onClick={handleCopyAddress} variant="outline" size="icon" className="h-12 w-12 border-2 border-primary/30 hover:border-primary hover:bg-primary/20 hover:text-primary transition-all rounded-lg">
                     <Copy className="h-5 w-5" />
                   </Button>
                 </div>
@@ -412,15 +346,12 @@ const Landing = () => {
         <div className="max-w-5xl mx-auto px-6 py-24">
           <div className="relative inline-block mb-16 w-full text-center">
             <h2 className="text-6xl font-black text-primary uppercase tracking-tight" style={{
-              textShadow: "0 0 60px hsl(145 80% 50% / 0.4)"
-            }}>Leaderboard</h2>
+            textShadow: "0 0 60px hsl(145 80% 50% / 0.4)"
+          }}>Leaderboard</h2>
             <div className="absolute -inset-8 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-3xl -z-10 animate-glow" />
           </div>
 
-          {payouts.length === 0 ? (
-            <p className="text-center text-muted-foreground">No payouts yet</p>
-          ) : (
-            <div className="space-y-4">
+          {payouts.length === 0 ? <p className="text-center text-muted-foreground">No payouts yet</p> : <div className="space-y-4">
               {/* Table Header */}
               <div className="grid grid-cols-3 gap-6 pb-5 border-b-2 border-primary/40 bg-gradient-to-r from-primary/10 to-transparent p-5 rounded-t-xl">
                 <div className="text-base font-black text-primary uppercase tracking-wider">Winner Wallet</div>
@@ -429,33 +360,21 @@ const Landing = () => {
               </div>
 
               {/* Table Rows */}
-              {payouts.map((payout, idx) => (
-                <div
-                  key={payout.id}
-                  className="grid grid-cols-3 gap-6 py-5 px-5 border-b border-border/30 hover:bg-card/40 hover:border-primary/20 transition-all group rounded-lg"
-                >
+              {payouts.map((payout, idx) => <div key={payout.id} className="grid grid-cols-3 gap-6 py-5 px-5 border-b border-border/30 hover:bg-card/40 hover:border-primary/20 transition-all group rounded-lg">
                   <div className="text-sm text-muted-foreground font-mono truncate group-hover:text-foreground transition-colors">
                     {payout.winner_wallet}
                   </div>
-                  <a
-                    href={`https://etherscan.io/tx/${payout.transaction_hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:text-primary-glow font-mono truncate flex items-center gap-2 transition-colors font-semibold"
-                  >
+                  <a href={`https://etherscan.io/tx/${payout.transaction_hash}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:text-primary-glow font-mono truncate flex items-center gap-2 transition-colors font-semibold">
                     {payout.transaction_hash.slice(0, 10)}...
                     <ExternalLink className="h-4 w-4" />
                   </a>
                   <div className="text-sm text-muted-foreground text-right font-mono group-hover:text-primary transition-colors font-bold">
                     {payout.amount}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                </div>)}
+            </div>}
         </div>
       </div>
-    </>
-  );
+    </>;
 };
 export default Landing;
