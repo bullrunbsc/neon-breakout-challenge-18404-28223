@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 const CONTRACT_ADDRESS = "FFPMq7uQ4J26hDrjwHQHd9DhfdsUJmS6v3L4dzHTpump";
 const Landing = () => {
   const navigate = useNavigate();
+  const { ready, authenticated, login } = usePrivy();
+  const { wallets } = useWallets();
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
-  const [walletAddress, setWalletAddress] = useState("");
 
   // Keyboard shortcut for admin panel (Ctrl+Shift+A)
   useEffect(() => {
@@ -89,10 +91,17 @@ const Landing = () => {
     toast.success("Contract address copied!");
   };
   const handleJoinGame = async () => {
-    if (!walletAddress.trim()) {
-      toast.error("Please enter your wallet address");
+    if (!ready || !authenticated) {
+      login();
       return;
     }
+
+    const walletAddress = wallets[0]?.address;
+    if (!walletAddress) {
+      toast.error("No wallet connected");
+      return;
+    }
+
     if (!currentGame) {
       toast.error("No active game found");
       return;
@@ -184,7 +193,7 @@ const Landing = () => {
             {!currentGame && <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
                 <span className="text-lg font-medium italic">No game is live right now</span>
                 <span className="text-xs">·</span>
-                <Button onClick={() => window.open("https://x.com/WinDoorz", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
+                <Button onClick={() => window.open("https://x.com/WinButtons", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current mr-2" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
@@ -195,7 +204,7 @@ const Landing = () => {
             {currentGame?.status === "finished" && <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
                 <span className="text-lg font-medium italic">No game is live right now</span>
                 <span className="text-xs">·</span>
-                <Button onClick={() => window.open("https://x.com/WinDoorz", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
+                <Button onClick={() => window.open("https://x.com/WinButtons", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current mr-2" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
@@ -223,18 +232,20 @@ const Landing = () => {
 
             {/* Join Form */}
             {currentGame && (currentGame.status === "waiting" || currentGame.status === "countdown") && <div className="space-y-4">
-                <div className="space-y-2">
-                  <Input type="text" placeholder="Enter your wallet address" value={walletAddress} onChange={e => setWalletAddress(e.target.value)} className="w-full h-12 text-base bg-input/80 border-border/50 rounded-sm backdrop-blur-sm" />
-                  <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                    SUBMIT YOUR VALID WALLET ADDRESS, IF YOU WIN THE FEES ARE SENT THERE, IF THE WALLET IS NOT VALID THE
-                    WIN DOESN'T COUNT
-                  </p>
-                </div>
+                {authenticated && wallets[0]?.address && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                      Connected: {wallets[0].address.slice(0, 4)}...{wallets[0].address.slice(-4)}
+                    </p>
+                  </div>
+                )}
                 <Button onClick={handleJoinGame} className="relative w-full h-14 text-lg font-bold rounded-full overflow-hidden group border-2 border-primary/50" style={{
               background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
               boxShadow: "0 0 40px hsl(145 80% 50% / 0.4), 0 10px 60px -10px hsl(145 80% 50% / 0.6)"
             }}>
-                  <span className="relative z-10 text-black font-black tracking-wider">ENTER GAME</span>
+                  <span className="relative z-10 text-black font-black tracking-wider">
+                    {!authenticated ? "CONNECT WALLET" : "ENTER GAME"}
+                  </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 </Button>
               </div>}
