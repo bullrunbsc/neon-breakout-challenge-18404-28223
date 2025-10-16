@@ -19,7 +19,7 @@ const Game = () => {
   const [player, setPlayer] = useState<any>(null);
   const [currentRound, setCurrentRound] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [selectedDoor, setSelectedDoor] = useState<number | null>(null);
+  const [selectedButton, setSelectedButton] = useState<number | null>(null);
   const [winners, setWinners] = useState<any[]>([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<"correct" | "wrong" | null>(null);
@@ -232,7 +232,7 @@ const Game = () => {
           console.log("No existing answer for round", round.round_number, "- enabling submission");
           setHasSubmitted(false);
           setSubmissionResult(null);
-          setSelectedDoor(null);
+          setSelectedButton(null);
         }
       }
     }
@@ -414,7 +414,7 @@ const Game = () => {
             setGameState("in_round");
             setHasSubmitted(false);
             setSubmissionResult(null);
-            setSelectedDoor(null);
+            setSelectedButton(null);
           }
         }
       )
@@ -517,10 +517,10 @@ const Game = () => {
   }, [game]);
 
   const handleSubmitAnswer = async () => {
-    console.log("Submit clicked. Selected door:", selectedDoor, "Current round:", currentRound, "Player:", player);
+    console.log("Submit clicked. Selected button:", selectedButton, "Current round:", currentRound, "Player:", player);
     
-    if (!selectedDoor) {
-      toast.error("Please select a door");
+    if (!selectedButton) {
+      toast.error("Please select a button");
       return;
     }
 
@@ -540,7 +540,7 @@ const Game = () => {
       .rpc("validate_answer", {
         p_round_id: currentRound.id,
         p_player_id: player.id,
-        p_selected_door: selectedDoor,
+        p_selected_door: selectedButton,
       });
 
     if (validationError) {
@@ -565,7 +565,7 @@ const Game = () => {
         .insert({
           round_id: currentRound.id,
           player_id: player.id,
-          selected_door: selectedDoor,
+          selected_door: selectedButton,
           is_correct: true,
         });
 
@@ -661,7 +661,7 @@ const Game = () => {
         .insert({
           round_id: currentRound.id,
           player_id: player.id,
-          selected_door: selectedDoor,
+          selected_door: selectedButton,
           is_correct: false,
         });
 
@@ -787,7 +787,7 @@ const Game = () => {
       <div className="max-w-2xl w-full space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-6xl font-black neon-glow">DOORZ</h1>
+          <h1 className="text-6xl font-black neon-glow">GUESS</h1>
           <p className="text-muted-foreground">Player: {wallet}</p>
         </div>
 
@@ -875,7 +875,7 @@ const Game = () => {
               </div>
             </div>
 
-            {/* Door Selection Box */}
+            {/* Button Selection */}
             <div className="neon-border rounded-2xl p-8 bg-card space-y-6">
               {!hasSubmitted ? (
                 <>
@@ -885,78 +885,114 @@ const Game = () => {
                         Round starting soon...
                       </div>
                       <p className="text-lg text-muted-foreground">
-                        Choose your door!
+                        Pick wisely. One button leads forward.
                       </p>
                     </div>
                   ) : (
                     <>
                       <div className="text-center mb-6">
                         <div className="text-sm font-medium text-primary uppercase tracking-widest mb-4">
-                          Choose a Door
+                          Choose Your Button
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        {[1, 2, 3].map((door) => (
+                      <div className="grid grid-cols-3 gap-6">
+                        {[1, 2, 3].map((button) => (
                           <button
-                            key={door}
+                            key={button}
                             type="button"
                             onClick={() => {
-                              console.log("Door clicked:", door);
-                              setSelectedDoor(door);
-                              toast.info(`Door ${door} selected`);
+                              console.log("Button clicked:", button);
+                              setSelectedButton(button);
+                              toast.info(`Button ${button} selected`);
                             }}
-                            className={`relative aspect-[3/4] rounded-lg border-4 transition-all duration-300 cursor-pointer ${
-                              selectedDoor === door
-                                ? "border-primary bg-primary/20 scale-105 shadow-[0_0_40px_rgba(34,197,94,0.5)]"
-                                : "border-border hover:border-primary/50 hover:scale-105 bg-card/50"
+                            className={`relative aspect-square rounded-full border-4 transition-all duration-300 cursor-pointer ${
+                              selectedButton === button
+                                ? "border-primary bg-primary/20 scale-110 shadow-[0_0_40px_rgba(34,197,94,0.6)] animate-pulse"
+                                : "border-border hover:border-primary/50 hover:scale-105 bg-card/50 hover:shadow-[0_0_20px_rgba(34,197,94,0.3)]"
                             }`}
                           >
-                            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
-                              <div className="text-6xl">🚪</div>
-                              <div className="text-4xl font-black neon-glow">{door}</div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="text-6xl font-black neon-glow">{button}</div>
                             </div>
                           </button>
                         ))}
                       </div>
                       <Button
                         onClick={handleSubmitAnswer}
-                        disabled={!selectedDoor || hasSubmitted}
+                        disabled={!selectedButton || hasSubmitted}
                         className="w-full h-16 text-2xl font-bold bg-primary hover:bg-primary/90 neon-border disabled:opacity-50 disabled:cursor-not-allowed"
                         size="lg"
                       >
-                        CHOOSE DOOR {selectedDoor || '?'}
+                        CONFIRM BUTTON {selectedButton || '?'}
                       </Button>
                     </>
                   )}
                 </>
               ) : (
-                <div className="text-center space-y-6">
-                  {submissionResult === "correct" ? (
-                    <>
-                      <div className="text-6xl font-black text-primary neon-glow">
-                        ✓ CORRECT
-                      </div>
-                      <p className="text-xl text-muted-foreground">
-                        Waiting for round to end...
-                      </p>
-                      {timeLeft === 0 && (
-                        <p className="text-lg text-primary animate-pulse">
-                          Admin will start next round soon
+                <div className="space-y-6">
+                  {/* Show all 3 buttons with results */}
+                  <div className="grid grid-cols-3 gap-6">
+                    {[1, 2, 3].map((button) => {
+                      const isSelected = selectedButton === button;
+                      const isCorrect = submissionResult === "correct" && isSelected;
+                      const isWrong = !isCorrect;
+                      
+                      return (
+                        <div
+                          key={button}
+                          className={`relative aspect-square rounded-full border-4 transition-all duration-500 ${
+                            isCorrect
+                              ? "border-green-500 bg-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.8)] scale-110"
+                              : isWrong
+                              ? "border-red-500 bg-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.8)]"
+                              : "border-border bg-card/50"
+                          }`}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className={`text-6xl font-black ${
+                              isCorrect ? "text-green-400" : isWrong ? "text-red-400" : "text-muted"
+                            }`}>
+                              {button}
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute -top-2 -right-2 text-3xl">
+                              {isCorrect ? "✓" : "✗"}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="text-center space-y-4">
+                    {submissionResult === "correct" ? (
+                      <>
+                        <div className="text-6xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.8)]">
+                          ✓ CORRECT
+                        </div>
+                        <p className="text-xl text-muted-foreground">
+                          Waiting for round to end...
                         </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-6xl font-black text-destructive game-over-glow">
-                        ✗ WRONG
-                      </div>
-                      <p className="text-xl text-muted-foreground">
-                        You will be eliminated when the round ends
-                      </p>
+                        {timeLeft === 0 && (
+                          <p className="text-lg text-primary animate-pulse">
+                            Admin will start next round soon
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-6xl font-black text-red-400 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">
+                          ✗ ELIMINATED
+                        </div>
+                        <p className="text-xl text-muted-foreground">
+                          You will be eliminated when the round ends
+                        </p>
                     </>
                   )}
                 </div>
-              )}
+              </div>
+            )}
             </div>
           </div>
         )}
