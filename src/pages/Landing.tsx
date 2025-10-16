@@ -40,25 +40,35 @@ const Landing = () => {
   useEffect(() => {
     // Fetch current game
     const fetchGame = async () => {
-      const {
-        data
-      } = await supabase.from("games").select("*").order("created_at", {
-        ascending: false
-      }).limit(1).single();
+      const { data } = await supabase
+        .from("games")
+        .select("*")
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(1)
+        .single();
       setCurrentGame(data);
     };
     fetchGame();
 
     // Subscribe to game changes
-    const channel = supabase.channel("games-landing").on("postgres_changes", {
-      event: "*",
-      schema: "public",
-      table: "games"
-    }, payload => {
-      if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
-        setCurrentGame(payload.new);
-      }
-    }).subscribe();
+    const channel = supabase
+      .channel("games-landing")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "games",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            setCurrentGame(payload.new);
+          }
+        },
+      )
+      .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -66,11 +76,13 @@ const Landing = () => {
   useEffect(() => {
     // Fetch latest payouts
     const fetchPayouts = async () => {
-      const {
-        data
-      } = await supabase.from("payouts").select("*").order("created_at", {
-        ascending: false
-      }).limit(5);
+      const { data } = await supabase
+        .from("payouts")
+        .select("*")
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(5);
       if (data) {
         setPayouts(data);
       }
@@ -84,13 +96,13 @@ const Landing = () => {
         const now = Date.now();
         const countdownStart = new Date(currentGame.started_at).getTime();
         const elapsedSeconds = Math.floor((now - countdownStart) / 1000);
-        
+
         // Use admin-set countdown duration (defaults to 1 minute)
         const countdownDuration = (currentGame.countdown_minutes || 1) * 60;
         const remainingSeconds = Math.max(0, countdownDuration - elapsedSeconds);
-        
+
         setCountdown(remainingSeconds);
-        
+
         if (remainingSeconds === 0) {
           clearInterval(interval);
         }
@@ -146,24 +158,32 @@ const Landing = () => {
     toast.success("Joined game!");
     navigate(`/game?gameId=${currentGame.id}&wallet=${walletAddress}`);
   };
-  return <>
+  return (
+    <>
       {/* Retro Arcade Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden bg-background">
         {/* CRT Screen Effect */}
         <div className="absolute inset-0 scanlines opacity-20" />
-        
+
         {/* Pixel Grid */}
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(hsl(145 80% 50% / 0.05) 2px, transparent 2px), linear-gradient(90deg, hsl(145 80% 50% / 0.05) 2px, transparent 2px)',
-          backgroundSize: '40px 40px'
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(145 80% 50% / 0.05) 2px, transparent 2px), linear-gradient(90deg, hsl(145 80% 50% / 0.05) 2px, transparent 2px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
 
         {/* Neon Glows */}
         <div className="absolute top-20 left-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-glow" />
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-accent/10 rounded-full blur-[120px]" style={{
-          animation: "glow 3s ease-in-out infinite"
-        }} />
-        
+        <div
+          className="absolute bottom-20 right-20 w-80 h-80 bg-accent/10 rounded-full blur-[120px]"
+          style={{
+            animation: "glow 3s ease-in-out infinite",
+          }}
+        />
+
         {/* Arcade Frame */}
         <div className="absolute top-4 left-4 right-4 bottom-4 border-4 border-primary/20 rounded-3xl pointer-events-none">
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-32 h-4 bg-primary/30 rounded-full blur-sm" />
@@ -178,7 +198,7 @@ const Landing = () => {
           <div className="text-center space-y-6">
             <div className="relative inline-block">
               <div className="absolute -inset-8 bg-primary/20 blur-3xl animate-glow rounded-full" />
-              <h1 
+              <h1
                 className="text-7xl md:text-9xl font-black tracking-wider text-foreground uppercase relative"
                 style={{
                   textShadow: `
@@ -189,7 +209,7 @@ const Landing = () => {
                     4px 4px 0px hsl(145 80% 50% / 0.5)
                   `,
                   fontFamily: "'Press Start 2P', 'Orbitron', monospace",
-                  letterSpacing: '0.1em'
+                  letterSpacing: "0.1em",
                 }}
               >
                 BUTTONS
@@ -204,24 +224,25 @@ const Landing = () => {
 
           {/* Arcade Console */}
           <div className="max-w-xl mx-auto">
-            <div className="relative p-8 rounded-2xl border-4 border-primary/40 bg-gradient-to-b from-card/60 to-card/80 backdrop-blur-xl" style={{
-              boxShadow: `
+            <div
+              className="relative p-8 rounded-2xl border-4 border-primary/40 bg-gradient-to-b from-card/60 to-card/80 backdrop-blur-xl"
+              style={{
+                boxShadow: `
                 0 0 40px hsl(145 80% 50% / 0.3),
                 inset 0 0 60px hsl(145 80% 50% / 0.05)
-              `
-            }}>
+              `,
+              }}
+            >
               {/* Screen Display */}
               <div className="space-y-6">
                 {/* Status Display */}
                 {!currentGame && (
                   <div className="text-center space-y-4 py-8">
                     <div className="text-accent text-6xl font-black animate-pulse">404</div>
-                    <p className="text-muted-foreground font-mono uppercase tracking-wider">
-                      No Game Active
-                    </p>
-                    <Button 
-                      onClick={() => window.open("https://x.com/GuessButtons", "_blank")} 
-                      variant="outline" 
+                    <p className="text-muted-foreground font-mono uppercase tracking-wider">No Game Active</p>
+                    <Button
+                      onClick={() => window.open("https://x.com/GuessButtons", "_blank")}
+                      variant="outline"
                       className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase tracking-wider"
                     >
                       Follow @GuessButtons
@@ -233,8 +254,8 @@ const Landing = () => {
                   <div className="text-center space-y-4 py-8">
                     <div className="text-primary text-5xl font-black">GAME OVER</div>
                     <p className="text-muted-foreground font-mono">Insert coin for next game</p>
-                    <Button 
-                      onClick={() => window.open("https://x.com/GuessButtons", "_blank")} 
+                    <Button
+                      onClick={() => window.open("https://x.com/GuessButtons", "_blank")}
                       variant="outline"
                       className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase"
                     >
@@ -245,29 +266,34 @@ const Landing = () => {
 
                 {currentGame?.status === "waiting" && (
                   <div className="text-center py-8">
-                    <div className="text-primary text-4xl font-black mb-4 animate-pulse">
-                      LOADING...
-                    </div>
+                    <div className="text-primary text-4xl font-black mb-4 animate-pulse">LOADING...</div>
                     <div className="flex justify-center gap-2">
-                      <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div
+                        className="w-3 h-3 bg-primary rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <div
+                        className="w-3 h-3 bg-primary rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <div
+                        className="w-3 h-3 bg-primary rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
                     </div>
                   </div>
                 )}
 
                 {currentGame?.status === "countdown" && countdown !== null && (
                   <div className="text-center py-8 space-y-4">
-                    <p className="text-muted-foreground font-mono uppercase tracking-wider text-sm">
-                      Starting In
-                    </p>
-                    <div 
+                    <p className="text-muted-foreground font-mono uppercase tracking-wider text-sm">Starting In</p>
+                    <div
                       className="text-8xl font-black tabular-nums text-primary"
                       style={{
                         textShadow: `
                           0 0 20px hsl(145 80% 50%),
                           0 0 40px hsl(145 80% 50%)
-                        `
+                        `,
                       }}
                     >
                       {formatCountdown(countdown)}
@@ -277,13 +303,11 @@ const Landing = () => {
 
                 {currentGame?.status === "active" && (
                   <div className="text-center py-8 space-y-4">
-                    <div className="text-accent text-5xl font-black animate-pulse">
-                      LIVE
-                    </div>
+                    <div className="text-accent text-5xl font-black animate-pulse">LIVE</div>
                     <p className="text-foreground font-mono text-xl">
                       Round {currentGame.current_round} / {currentGame.total_rounds}
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => navigate(`/game?gameId=${currentGame.id}&spectate=true`)}
                       variant="outline"
                       className="border-2 border-accent/40 hover:border-accent hover:bg-accent/20 font-mono uppercase tracking-wider"
@@ -295,16 +319,12 @@ const Landing = () => {
 
                 {currentGame?.status === "break" && (
                   <div className="text-center py-8 space-y-4">
-                    <div className="text-primary text-4xl font-black animate-pulse">
-                      BREAK TIME
-                    </div>
-                    <p className="text-muted-foreground font-mono">
-                      Next round starting soon...
-                    </p>
+                    <div className="text-primary text-4xl font-black animate-pulse">BREAK TIME</div>
+                    <p className="text-muted-foreground font-mono">Next round starting soon...</p>
                     <p className="text-foreground font-mono text-xl">
                       Round {(currentGame.current_round || 0) + 1} / {currentGame.total_rounds}
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => navigate(`/game?gameId=${currentGame.id}&spectate=true`)}
                       variant="outline"
                       className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase tracking-wider"
@@ -340,15 +360,15 @@ const Landing = () => {
                         <p className="text-xs text-red-500 font-mono">Invalid Solana wallet address</p>
                       )}
                     </div>
-                    
-                    <Button 
+
+                    <Button
                       onClick={handleJoinGame}
                       disabled={!isValidAddress}
                       className="w-full h-14 text-lg font-black rounded-xl border-4 border-primary/50 uppercase tracking-wider relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
                         boxShadow: "0 0 40px hsl(145 80% 50% / 0.5)",
-                        color: "hsl(0 0% 0%)"
+                        color: "hsl(0 0% 0%)",
                       }}
                     >
                       <span className="relative z-10">INSERT COIN</span>
@@ -365,41 +385,47 @@ const Landing = () => {
             {[
               { icon: "►", title: "HOW TO PLAY", text: "5 rounds × 3 buttons. Pick right. Survive.", color: "primary" },
               { icon: "✕", title: "ELIMINATION", text: "Wrong choice or timeout = GAME OVER", color: "accent" },
-              { icon: "★", title: "VICTORY", text: "First 3 survivors split the prize", color: "primary" },
-              { icon: "$", title: "REWARDS", text: "80% to winners • 20% to treasury", color: "primary" }
+              {
+                icon: "★",
+                title: "VICTORY",
+                text: "Guess all 5 buttons first = win all of the creator fees.",
+                color: "primary",
+              },
+              { icon: "$", title: "REWARDS", text: "80% to winners • 20% to treasury", color: "primary" },
             ].map((card, i) => (
-              <div 
+              <div
                 key={i}
                 className="relative p-5 rounded-lg border-4 bg-card/60 backdrop-blur-sm hover:scale-105 transition-transform"
                 style={{
                   borderColor: card.color === "accent" ? "hsl(0 85% 58% / 0.4)" : "hsl(145 80% 50% / 0.4)",
-                  boxShadow: `0 0 20px ${card.color === "accent" ? "hsl(0 85% 58% / 0.2)" : "hsl(145 80% 50% / 0.2)"}`
+                  boxShadow: `0 0 20px ${card.color === "accent" ? "hsl(0 85% 58% / 0.2)" : "hsl(145 80% 50% / 0.2)"}`,
                 }}
               >
-                <div 
+                <div
                   className="text-4xl font-black mb-2"
                   style={{ color: card.color === "accent" ? "hsl(0 85% 58%)" : "hsl(145 80% 50%)" }}
                 >
                   {card.icon}
                 </div>
-                <h3 
+                <h3
                   className="text-sm font-black mb-2 uppercase tracking-wider font-mono"
                   style={{ color: card.color === "accent" ? "hsl(0 85% 58%)" : "hsl(145 80% 50%)" }}
                 >
                   {card.title}
                 </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed font-mono">
-                  {card.text}
-                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed font-mono">{card.text}</p>
               </div>
             ))}
           </div>
 
           {/* Special Rules */}
           <div className="max-w-2xl mx-auto">
-            <div className="p-6 rounded-xl border-4 border-primary/30 bg-card/60 backdrop-blur-sm" style={{
-              boxShadow: "0 0 30px hsl(145 80% 50% / 0.2)"
-            }}>
+            <div
+              className="p-6 rounded-xl border-4 border-primary/30 bg-card/60 backdrop-blur-sm"
+              style={{
+                boxShadow: "0 0 30px hsl(145 80% 50% / 0.2)",
+              }}
+            >
               <h3 className="text-2xl font-black text-primary text-center mb-6 uppercase font-mono">
                 ⚠ SPECIAL RULES ⚠
               </h3>
@@ -407,7 +433,8 @@ const Landing = () => {
                 <div className="flex gap-3 p-4 rounded-lg bg-background/50 border-2 border-primary/20">
                   <span className="text-primary text-xl">●</span>
                   <p className="text-sm text-muted-foreground font-mono">
-                    <span className="text-foreground font-bold">NO WINNERS:</span> Treasury buyback initiated
+                    <span className="text-foreground font-bold">NO WINNERS:</span> Treasury buyback initiated every 3
+                    rounds.
                   </p>
                 </div>
                 <div className="flex gap-3 p-4 rounded-lg bg-background/50 border-2 border-accent/20">
@@ -422,20 +449,23 @@ const Landing = () => {
 
           {/* Token Contract */}
           <div className="max-w-2xl mx-auto">
-            <div className="p-5 rounded-xl border-4 border-primary/30 bg-card/60 backdrop-blur-sm" style={{
-              boxShadow: "0 0 30px hsl(145 80% 50% / 0.2)"
-            }}>
+            <div
+              className="p-5 rounded-xl border-4 border-primary/30 bg-card/60 backdrop-blur-sm"
+              style={{
+                boxShadow: "0 0 30px hsl(145 80% 50% / 0.2)",
+              }}
+            >
               <h3 className="text-base font-black text-primary text-center mb-4 uppercase font-mono tracking-wider">
                 $BUTTONS TOKEN
               </h3>
               <div className="flex gap-2">
-                <Input 
-                  type="text" 
-                  value={CONTRACT_ADDRESS} 
-                  readOnly 
+                <Input
+                  type="text"
+                  value={CONTRACT_ADDRESS}
+                  readOnly
                   className="flex-1 h-11 bg-input/80 text-foreground text-xs font-mono border-2 border-primary/30 focus:border-primary"
                 />
-                <Button 
+                <Button
                   onClick={handleCopyAddress}
                   variant="outline"
                   size="icon"
@@ -453,13 +483,13 @@ const Landing = () => {
       <div className="relative w-full border-t-4 border-primary/30 mt-20">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
-            <h2 
+            <h2
               className="text-5xl font-black text-primary uppercase tracking-wider font-mono inline-block"
               style={{
                 textShadow: `
                   0 0 20px hsl(145 80% 50%),
                   0 0 40px hsl(145 80% 50%)
-                `
+                `,
               }}
             >
               ★ HALL OF FAME ★
@@ -469,9 +499,7 @@ const Landing = () => {
           {payouts.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">🏆</div>
-              <p className="text-muted-foreground font-mono uppercase tracking-wider">
-                No winners yet. Be the first!
-              </p>
+              <p className="text-muted-foreground font-mono uppercase tracking-wider">No winners yet. Be the first!</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -479,19 +507,21 @@ const Landing = () => {
               <div className="grid grid-cols-3 gap-4 p-4 border-4 border-primary/40 bg-primary/10 rounded-lg">
                 <div className="text-sm font-black text-primary uppercase tracking-wider font-mono">WINNER</div>
                 <div className="text-sm font-black text-primary uppercase tracking-wider font-mono">TX HASH</div>
-                <div className="text-sm font-black text-primary text-right uppercase tracking-wider font-mono">PRIZE</div>
+                <div className="text-sm font-black text-primary text-right uppercase tracking-wider font-mono">
+                  PRIZE
+                </div>
               </div>
 
               {/* Entries */}
               {payouts.map((payout) => (
-                <div 
-                  key={payout.id} 
+                <div
+                  key={payout.id}
                   className="grid grid-cols-3 gap-4 p-4 border-2 border-border/40 bg-card/40 hover:border-primary/40 hover:bg-card/60 transition-all rounded-lg group"
                 >
                   <div className="text-xs text-muted-foreground font-mono truncate group-hover:text-primary transition-colors">
                     {payout.winner_wallet}
                   </div>
-                  <a 
+                  <a
                     href={`https://etherscan.io/tx/${payout.transaction_hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -509,6 +539,7 @@ const Landing = () => {
           )}
         </div>
       </div>
-    </>;
+    </>
+  );
 };
 export default Landing;
