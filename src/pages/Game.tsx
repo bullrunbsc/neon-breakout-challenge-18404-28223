@@ -653,8 +653,7 @@ const Game = () => {
           player_id: player.id,
           selected_door: selectedButton,
           is_correct: false,
-
-         // Immediately eliminate player and force realtime update
+           // Immediately eliminate player and force realtime update
       const { error: playerError } = await supabase
         .from("players")
         .update({
@@ -689,6 +688,8 @@ const Game = () => {
       setTimeout(() => {
         navigate("/");
       }, 3000);
+
+        
         });
 
       if (answerError) {
