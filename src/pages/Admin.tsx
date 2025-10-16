@@ -13,12 +13,12 @@ const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   // Login form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignupMode, setIsSignupMode] = useState(false);
-  
+
   // Game state
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
@@ -28,8 +28,10 @@ const Admin = () => {
   // Check authentication and admin status on mount
   useEffect(() => {
     checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         verifyAdminStatus(session.user.id);
@@ -43,7 +45,9 @@ const Admin = () => {
   }, []);
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     setUser(session?.user ?? null);
     if (session?.user) {
       await verifyAdminStatus(session.user.id);
@@ -54,25 +58,25 @@ const Admin = () => {
 
   const verifyAdminStatus = async (userId: string, retryCount = 0) => {
     try {
-      const { data, error } = await supabase.rpc('is_admin', { check_user_id: userId });
+      const { data, error } = await supabase.rpc("is_admin", { check_user_id: userId });
       if (error) {
         throw error;
       }
       setIsAdmin(data === true);
       if (data !== true) {
-        toast.error('Access denied: You are not an admin');
+        toast.error("Access denied: You are not an admin");
       }
       setLoading(false);
     } catch (error: any) {
-      console.error('Error checking admin status:', error);
-      
+      console.error("Error checking admin status:", error);
+
       // Retry up to 2 times with exponential backoff
       if (retryCount < 2) {
         const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s
         console.log(`Retrying admin verification in ${delay}ms... (attempt ${retryCount + 1}/2)`);
         setTimeout(() => verifyAdminStatus(userId, retryCount + 1), delay);
       } else {
-        toast.error('Connection timeout - please refresh the page');
+        toast.error("Connection timeout - please refresh the page");
         setIsAdmin(false);
         setLoading(false);
       }
@@ -108,18 +112,17 @@ const Admin = () => {
     if (gameData.status === "countdown") {
       if (gameData.started_at) {
         const countdownEndTime = new Date(gameData.started_at);
-        
+
         console.log("In countdown. Countdown ends at:", countdownEndTime, "Now:", now);
-        
+
         if (now > countdownEndTime) {
           console.log("Countdown ended, starting round 1");
-          
+
           // Check if round 1 already exists (recovery from failed state)
-          const { data: existingRound } = await supabase
-            .rpc("admin_get_round", {
-              p_game_id: gameData.id,
-              p_round_number: 1,
-            });
+          const { data: existingRound } = await supabase.rpc("admin_get_round", {
+            p_game_id: gameData.id,
+            p_round_number: 1,
+          });
 
           if (existingRound && existingRound.length > 0) {
             console.log("Round 1 already exists, just updating game status to active");
@@ -133,9 +136,9 @@ const Admin = () => {
             toast.success("Round 1 started!");
             return;
           }
-          
+
           const correctDoor = correctDoors[0];
-          
+
           await startNextRoundDirect(gameData, 1, correctDoor);
         }
       }
@@ -146,20 +149,20 @@ const Admin = () => {
     if (gameData.status === "break") {
       if (gameData.break_ends_at) {
         const breakEndTime = new Date(gameData.break_ends_at);
-        
+
         console.log("In break. Break ends at:", breakEndTime, "Now:", now);
-        
+
         if (now > breakEndTime) {
           console.log("Break period ended, starting next round");
-          
+
           const nextRound = gameData.current_round + 1;
           if (nextRound > 5) {
             console.log("Game should be finished after 5 rounds");
             return;
           }
-          
+
           const correctDoor = correctDoors[nextRound - 1];
-          
+
           await startNextRoundDirect(gameData, nextRound, correctDoor);
         }
       }
@@ -168,11 +171,10 @@ const Admin = () => {
 
     // Handle "active" status - check if round has expired
     if (gameData.status === "active" && gameData.current_round > 0) {
-      const { data: currentRoundData } = await supabase
-        .rpc("admin_get_round", {
-          p_game_id: gameData.id,
-          p_round_number: gameData.current_round,
-        });
+      const { data: currentRoundData } = await supabase.rpc("admin_get_round", {
+        p_game_id: gameData.id,
+        p_round_number: gameData.current_round,
+      });
 
       if (!currentRoundData || currentRoundData.length === 0) {
         console.log("No round data found");
@@ -180,9 +182,17 @@ const Admin = () => {
       }
 
       const endTime = new Date(currentRoundData[0].ends_at);
-      
-      console.log("Round ends at:", endTime, "Now:", now, "Diff:", (endTime.getTime() - now.getTime()) / 1000, "seconds");
-      
+
+      console.log(
+        "Round ends at:",
+        endTime,
+        "Now:",
+        now,
+        "Diff:",
+        (endTime.getTime() - now.getTime()) / 1000,
+        "seconds",
+      );
+
       if (now > endTime) {
         console.log("Processing expired round:", currentRoundData[0].round_number);
         await checkAnswersAndEliminate(currentRoundData[0].id, currentRoundData[0].round_number, gameData);
@@ -212,26 +222,27 @@ const Admin = () => {
   };
 
   const subscribeToChanges = () => {
+    // debounce so we don't spam refreshes
+    const debounce = (fn: Function, delay: number) => {
+      let timer: ReturnType<typeof setTimeout>;
+      return (...args: any[]) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
+    };
+
+    const debouncedFetch = debounce(fetchGameData, 800);
+
     const channel = supabase
-      .channel("admin-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "games",
-        },
-        () => fetchGameData()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "players",
-        },
-        () => fetchGameData()
-      )
+      .channel("admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "games" }, (payload) => {
+        console.log("🔄 Game table change:", payload.eventType);
+        debouncedFetch();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "players" }, (payload) => {
+        console.log("👤 Player update:", payload.new?.wallet_address, "→", payload.new?.status);
+        debouncedFetch();
+      })
       .subscribe();
 
     return () => {
@@ -250,8 +261,8 @@ const Admin = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/admin`
-      }
+        emailRedirectTo: `${window.location.origin}/admin`,
+      },
     });
 
     if (error) {
@@ -262,15 +273,13 @@ const Admin = () => {
 
     if (data.user) {
       // Add user to admin_users table
-      const { error: adminError } = await supabase
-        .from('admin_users')
-        .insert({ user_id: data.user.id });
+      const { error: adminError } = await supabase.from("admin_users").insert({ user_id: data.user.id });
 
       if (adminError) {
-        console.error('Failed to add admin user:', adminError);
-        toast.error('Account created but failed to set admin privileges. Please contact support.');
+        console.error("Failed to add admin user:", adminError);
+        toast.error("Account created but failed to set admin privileges. Please contact support.");
       } else {
-        toast.success('Admin account created successfully!');
+        toast.success("Admin account created successfully!");
         await verifyAdminStatus(data.user.id);
       }
     }
@@ -315,13 +324,11 @@ const Admin = () => {
       roundConfig[`round_${i + 1}`] = correctDoors[i];
     }
 
-    const { error } = await supabase
-      .from("games")
-      .insert({
-        status: "waiting",
-        current_round: 0,
-        round_config: roundConfig,
-      });
+    const { error } = await supabase.from("games").insert({
+      status: "waiting",
+      current_round: 0,
+      round_config: roundConfig,
+    });
 
     if (error) {
       toast.error("Failed to create game");
@@ -365,19 +372,18 @@ const Admin = () => {
 
   const startNextRoundDirect = async (gameData: any, nextRound: number, correctDoor: number) => {
     console.log("Starting round", nextRound, "correct door:", correctDoor);
-    
+
     const roundStart = new Date();
     const roundEnd = new Date(roundStart.getTime() + 15000); // 15 seconds
 
     // Create round
-    const { data: roundData, error: roundError } = await supabase
-      .rpc("admin_create_round", {
-        p_game_id: gameData.id,
-        p_round_number: nextRound,
-        p_correct_door: correctDoor,
-        p_starts_at: roundStart.toISOString(),
-        p_ends_at: roundEnd.toISOString(),
-      });
+    const { data: roundData, error: roundError } = await supabase.rpc("admin_create_round", {
+      p_game_id: gameData.id,
+      p_round_number: nextRound,
+      p_correct_door: correctDoor,
+      p_starts_at: roundStart.toISOString(),
+      p_ends_at: roundEnd.toISOString(),
+    });
 
     if (roundError) {
       toast.error("Failed to create round");
@@ -408,7 +414,7 @@ const Admin = () => {
     if (!currentGame) return;
 
     const nextRound = currentGame.current_round + 1;
-    
+
     if (nextRound > 5) {
       // Game finished, determine winner
       await determineWinner();
@@ -421,14 +427,13 @@ const Admin = () => {
     const roundEnd = new Date(roundStart.getTime() + 15000); // 15 seconds
 
     // Create round
-    const { data: roundData, error: roundError } = await supabase
-      .rpc("admin_create_round", {
-        p_game_id: currentGame.id,
-        p_round_number: nextRound,
-        p_correct_door: correctDoor,
-        p_starts_at: roundStart.toISOString(),
-        p_ends_at: roundEnd.toISOString(),
-      });
+    const { data: roundData, error: roundError } = await supabase.rpc("admin_create_round", {
+      p_game_id: currentGame.id,
+      p_round_number: nextRound,
+      p_correct_door: correctDoor,
+      p_starts_at: roundStart.toISOString(),
+      p_ends_at: roundEnd.toISOString(),
+    });
 
     if (roundError) {
       toast.error("Failed to create round");
@@ -464,21 +469,16 @@ const Admin = () => {
       .eq("status", "active");
 
     if (!activePlayers) return;
-    
+
     console.log("Active players before elimination:", activePlayers.length);
 
     // Get answers for this round
-    const { data: answers } = await supabase
-      .from("answers")
-      .select("*")
-      .eq("round_id", roundId);
+    const { data: answers } = await supabase.from("answers").select("*").eq("round_id", roundId);
 
     console.log("Answers submitted:", answers?.length || 0);
 
     const answeredPlayerIds = new Set(answers?.map((a) => a.player_id) || []);
-    const correctPlayerIds = new Set(
-      answers?.filter((a) => a.is_correct).map((a) => a.player_id) || []
-    );
+    const correctPlayerIds = new Set(answers?.filter((a) => a.is_correct).map((a) => a.player_id) || []);
 
     console.log("Correct answers:", correctPlayerIds.size);
 
@@ -529,10 +529,10 @@ const Admin = () => {
       // Mark remaining active players who survived round 5 as winners
       if (remainingPlayers.length > 0) {
         console.log(`Marking ${remainingPlayers.length} remaining players as winners`);
-        
+
         for (const player of remainingPlayers) {
           // Check if this player answered correctly
-          const playerAnswer = answers?.find(a => a.player_id === player.id);
+          const playerAnswer = answers?.find((a) => a.player_id === player.id);
           if (playerAnswer && playerAnswer.is_correct) {
             currentWinnerCount++;
             await supabase
@@ -565,22 +565,22 @@ const Admin = () => {
       // Continue to next round after 10 second break
       console.log(`Setting break status after round ${roundNumber}`);
       toast.info(`Round ${roundNumber} complete - Next round in 10 seconds`);
-      
+
       // Calculate break end time from NOW (not from round end)
       const breakEndsAt = new Date(Date.now() + 10000);
-      
+
       console.log(`Break starts now. Will end at: ${breakEndsAt.toISOString()}`);
-      
+
       // Set game to break status with explicit break end time
       const { data: updateResult, error: updateError } = await supabase
         .from("games")
-        .update({ 
+        .update({
           status: "break",
-          break_ends_at: breakEndsAt.toISOString()
+          break_ends_at: breakEndsAt.toISOString(),
         })
         .eq("id", gameData.id)
         .select();
-        
+
       if (updateError) {
         console.error("Failed to set break status:", updateError);
       } else {
@@ -639,15 +639,21 @@ const Admin = () => {
                 disabled={loading}
               />
             </div>
-            <Button 
-              onClick={isSignupMode ? handleSignup : handleLogin} 
-              className="w-full h-12" 
+            <Button
+              onClick={isSignupMode ? handleSignup : handleLogin}
+              className="w-full h-12"
               size="lg"
               disabled={loading}
             >
-              {loading ? (isSignupMode ? "CREATING ACCOUNT..." : "SIGNING IN...") : (isSignupMode ? "CREATE ADMIN ACCOUNT" : "SIGN IN")}
+              {loading
+                ? isSignupMode
+                  ? "CREATING ACCOUNT..."
+                  : "SIGNING IN..."
+                : isSignupMode
+                  ? "CREATE ADMIN ACCOUNT"
+                  : "SIGN IN"}
             </Button>
-            <Button 
+            <Button
               variant="ghost"
               onClick={() => setIsSignupMode(!isSignupMode)}
               className="w-full"
@@ -657,8 +663,8 @@ const Admin = () => {
             </Button>
           </div>
           <div className="text-center">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => navigate("/")}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
@@ -695,7 +701,7 @@ const Admin = () => {
         {/* Game Controls */}
         <Card className="p-6 space-y-4">
           <h2 className="text-2xl font-bold">Game Controls</h2>
-          
+
           {currentGame?.status === "active" && (
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
               <p className="text-yellow-500 font-medium">
@@ -703,15 +709,13 @@ const Admin = () => {
               </p>
             </div>
           )}
-          
+
           {currentGame?.status === "break" && (
             <div className="p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
-              <p className="text-blue-500 font-medium">
-                ⏸️ Break - Next round will start automatically in 30 seconds
-              </p>
+              <p className="text-blue-500 font-medium">⏸️ Break - Next round will start automatically in 30 seconds</p>
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div className="flex items-end gap-4">
               <div className="flex-1 max-w-xs space-y-2">
@@ -727,7 +731,7 @@ const Admin = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-4">
               <Button onClick={handleCreateGame} disabled={currentGame?.status !== "finished" && currentGame}>
                 Create New Game
@@ -750,28 +754,28 @@ const Admin = () => {
               >
                 🚀 FORCE START NOW
               </Button>
-            <Button
-              onClick={startNextRound}
-              disabled={!currentGame || currentGame.status !== "active"}
-              variant="outline"
-              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-            >
-              {currentGame?.current_round === 0 ? "Start Round 1" : "Force Next Round / Check Answers"}
-            </Button>
-            <Button
-              onClick={async () => {
-                if (!currentGame) return;
-                await supabase
-                  .from("games")
-                  .update({ status: "finished", ended_at: new Date().toISOString() })
-                  .eq("id", currentGame.id);
-                toast.success("Game ended");
-              }}
-              disabled={!currentGame || currentGame.status === "finished"}
-              variant="destructive"
-            >
-              End Game
-            </Button>
+              <Button
+                onClick={startNextRound}
+                disabled={!currentGame || currentGame.status !== "active"}
+                variant="outline"
+                className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                {currentGame?.current_round === 0 ? "Start Round 1" : "Force Next Round / Check Answers"}
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!currentGame) return;
+                  await supabase
+                    .from("games")
+                    .update({ status: "finished", ended_at: new Date().toISOString() })
+                    .eq("id", currentGame.id);
+                  toast.success("Game ended");
+                }}
+                disabled={!currentGame || currentGame.status === "finished"}
+                variant="destructive"
+              >
+                End Game
+              </Button>
             </div>
           </div>
           {currentGame && (
@@ -823,10 +827,7 @@ const Admin = () => {
           <h2 className="text-2xl font-bold">Players ({players.length})</h2>
           <div className="space-y-2">
             {players.map((player) => (
-              <div
-                key={player.id}
-                className="flex justify-between items-center p-3 bg-muted rounded-lg gap-4"
-              >
+              <div key={player.id} className="flex justify-between items-center p-3 bg-muted rounded-lg gap-4">
                 <span className="font-mono flex-1">{player.wallet_address}</span>
                 <div className="flex items-center gap-2">
                   {player.winner_rank && (
@@ -839,8 +840,8 @@ const Admin = () => {
                       player.status === "active"
                         ? "bg-primary/20 text-primary"
                         : player.status === "eliminated"
-                        ? "bg-destructive/20 text-destructive"
-                        : "bg-green-500/20 text-green-500"
+                          ? "bg-destructive/20 text-destructive"
+                          : "bg-green-500/20 text-green-500"
                     }`}
                   >
                     {player.status.toUpperCase()}
