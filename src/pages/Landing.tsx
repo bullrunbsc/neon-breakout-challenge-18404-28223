@@ -5,15 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+
 const CONTRACT_ADDRESS = "FFPMq7uQ4J26hDrjwHQHd9DhfdsUJmS6v3L4dzHTpump";
 const Landing = () => {
   const navigate = useNavigate();
-  const { ready, authenticated, login } = usePrivy();
-  const { wallets } = useWallets();
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
+  const [walletAddress, setWalletAddress] = useState("");
 
   // Keyboard shortcut for admin panel (Ctrl+Shift+A)
   useEffect(() => {
@@ -91,315 +90,365 @@ const Landing = () => {
     toast.success("Contract address copied!");
   };
   const handleJoinGame = async () => {
-    console.log("🔍 Join game state:", { ready, authenticated, wallets });
-    
-    if (!ready) {
-      toast.error("Privy not ready");
-      console.log("❌ Privy not ready");
-      return;
-    }
-
-    if (!authenticated || wallets.length === 0) {
-      console.log("🔐 Calling login()");
-      login();
-      return;
-    }
-
-    const walletAddress = wallets[0]?.address;
-    console.log("💳 Wallet address:", walletAddress);
-    
-    if (!walletAddress) {
-      toast.error("No wallet address found");
-      console.log("❌ No wallet address");
+    if (!walletAddress.trim()) {
+      toast.error("Enter your wallet address");
       return;
     }
 
     if (!currentGame) {
-      toast.error("No active game found");
+      toast.error("No active game");
       return;
     }
 
     // Check if already joined
-    const {
-      data: existingPlayer
-    } = await supabase.from("players").select("*").eq("game_id", currentGame.id).eq("wallet_address", walletAddress).single();
+    const { data: existingPlayer } = await supabase
+      .from("players")
+      .select("*")
+      .eq("game_id", currentGame.id)
+      .eq("wallet_address", walletAddress)
+      .single();
+
     if (existingPlayer) {
       navigate(`/game?gameId=${currentGame.id}&wallet=${walletAddress}`);
       return;
     }
 
     // Join game
-    const {
-      error
-    } = await supabase.from("players").insert({
+    const { error } = await supabase.from("players").insert({
       game_id: currentGame.id,
-      wallet_address: walletAddress
+      wallet_address: walletAddress,
     });
+
     if (error) {
       toast.error("Failed to join game");
       console.error(error);
       return;
     }
+
     toast.success("Joined game!");
     navigate(`/game?gameId=${currentGame.id}&wallet=${walletAddress}`);
   };
   return <>
-      {/* Arcade Background */}
+      {/* Retro Arcade Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden bg-background">
-        {/* Radial gradient glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(145_80%_50%_/_0.08),transparent_70%)]" />
+        {/* CRT Screen Effect */}
+        <div className="absolute inset-0 scanlines opacity-20" />
         
-        {/* Scanlines effect */}
-        <div className="absolute inset-0 scanlines opacity-30" />
-        
-        {/* Grid pattern */}
+        {/* Pixel Grid */}
         <div className="absolute inset-0" style={{
-        backgroundImage: 'linear-gradient(hsl(145 80% 50% / 0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(145 80% 50% / 0.03) 1px, transparent 1px)',
-        backgroundSize: '50px 50px'
-      }} />
+          backgroundImage: 'linear-gradient(hsl(145 80% 50% / 0.05) 2px, transparent 2px), linear-gradient(90deg, hsl(145 80% 50% / 0.05) 2px, transparent 2px)',
+          backgroundSize: '40px 40px'
+        }} />
 
-        {/* Animated neon lines */}
-        <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-pulse-slow" />
-        <div className="absolute top-1/2 right-0 w-1/2 h-px bg-gradient-to-l from-transparent via-accent/30 to-transparent" style={{
-        animation: "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-      }} />
-        <div className="absolute bottom-1/3 left-1/4 w-1/3 h-px bg-gradient-to-r from-accent/30 via-transparent to-primary/30" style={{
-        animation: "pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-      }} />
-
-        {/* Corner brackets */}
-        <div className="absolute top-0 left-0 w-24 h-24 border-l-2 border-t-2 border-primary/30" />
-        <div className="absolute top-0 right-0 w-24 h-24 border-r-2 border-t-2 border-primary/30" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 border-l-2 border-b-2 border-accent/30" />
-        <div className="absolute bottom-0 right-0 w-24 h-24 border-r-2 border-b-2 border-accent/30" />
-
-        {/* Floating neon particles */}
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" style={{
-        animation: "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-      }} />
+        {/* Neon Glows */}
+        <div className="absolute top-20 left-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-glow" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-accent/10 rounded-full blur-[120px]" style={{
+          animation: "glow 3s ease-in-out infinite"
+        }} />
+        
+        {/* Arcade Frame */}
+        <div className="absolute top-4 left-4 right-4 bottom-4 border-4 border-primary/20 rounded-3xl pointer-events-none">
+          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-32 h-4 bg-primary/30 rounded-full blur-sm" />
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-32 h-4 bg-accent/30 rounded-full blur-sm" />
+        </div>
       </div>
 
       {/* Single Screen Layout */}
       <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-8">
         <div className="max-w-7xl w-full space-y-10">
-          {/* Title */}
-          <div className="text-center space-y-5">
+          {/* Arcade Title */}
+          <div className="text-center space-y-6">
             <div className="relative inline-block">
-              <h1 className="text-8xl md:text-9xl font-black tracking-[-0.05em] text-foreground uppercase" style={{
-              textShadow: "0 0 80px hsl(145 80% 50% / 0.5), 0 0 40px hsl(145 80% 50% / 0.3)",
-              fontFamily: "'Orbitron', 'Chakra Petch', 'Rajdhani', monospace"
-            }}>BUTTONS</h1>
-              <div className="absolute -inset-12 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20 blur-3xl -z-10 animate-glow" />
+              <div className="absolute -inset-8 bg-primary/20 blur-3xl animate-glow rounded-full" />
+              <h1 
+                className="text-7xl md:text-9xl font-black tracking-wider text-foreground uppercase relative"
+                style={{
+                  textShadow: `
+                    0 0 10px hsl(145 80% 50%),
+                    0 0 20px hsl(145 80% 50%),
+                    0 0 40px hsl(145 80% 50%),
+                    0 0 80px hsl(145 80% 50%),
+                    4px 4px 0px hsl(145 80% 50% / 0.5)
+                  `,
+                  fontFamily: "'Press Start 2P', 'Orbitron', monospace",
+                  letterSpacing: '0.1em'
+                }}
+              >
+                BUTTONS
+              </h1>
             </div>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium tracking-wide">
-              Pick wisely. One button leads forward.
-            </p>
-            <p className="text-sm text-muted-foreground/70 max-w-xl mx-auto">
-              3 buttons. 5 rounds. Only one is correct each time.
-            </p>
+            <div className="flex items-center justify-center gap-3 text-primary font-bold text-lg">
+              <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
+              <p className="font-mono uppercase tracking-widest">Press Start to Begin</p>
+              <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
+            </div>
           </div>
 
-          {/* Game Status & Join Form */}
-          <div className="max-w-md mx-auto space-y-6">
-            {!currentGame && <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
-                <span className="text-lg font-medium italic">No game is live right now</span>
-                <span className="text-xs">·</span>
-                <Button onClick={() => window.open("https://x.com/WinButtons", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current mr-2" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                  Follow us on X
-                </Button>
-              </div>}
-
-            {currentGame?.status === "finished" && <div className="flex items-center justify-center gap-3 text-muted-foreground animate-fade-in">
-                <span className="text-lg font-medium italic">No game is live right now</span>
-                <span className="text-xs">·</span>
-                <Button onClick={() => window.open("https://x.com/WinButtons", "_blank")} variant="ghost" size="sm" className="h-9 px-4 text-sm font-semibold hover:bg-foreground/10 transition-all hover:scale-105">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current mr-2" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                  Follow us on X
-                </Button>
-              </div>}
-
-            {currentGame?.status === "waiting" && <p className="text-lg text-muted-foreground animate-pulse-slow">Waiting for game to start...</p>}
-
-            {currentGame?.status === "countdown" && countdown !== null && <div className="space-y-3">
-                <p className="text-base text-muted-foreground">Game starts in</p>
-                <div className="text-7xl font-black tabular-nums" style={{
-              textShadow: "0 0 40px hsl(0 85% 58% / 0.3)"
+          {/* Arcade Console */}
+          <div className="max-w-xl mx-auto">
+            <div className="relative p-8 rounded-2xl border-4 border-primary/40 bg-gradient-to-b from-card/60 to-card/80 backdrop-blur-xl" style={{
+              boxShadow: `
+                0 0 40px hsl(145 80% 50% / 0.3),
+                inset 0 0 60px hsl(145 80% 50% / 0.05)
+              `
             }}>
-                  {formatCountdown(countdown)}
-                </div>
-              </div>}
-
-            {currentGame?.status === "active" && <div className="space-y-1">
-                <p className="text-xl font-bold">Game in progress</p>
-                <p className="text-base text-muted-foreground">
-                  Round {currentGame.current_round} / {currentGame.total_rounds}
-                </p>
-              </div>}
-
-            {/* Join Form */}
-            {currentGame && (currentGame.status === "waiting" || currentGame.status === "countdown") && <div className="space-y-4">
-                <div className="space-y-2 text-center">
-                  {authenticated && wallets.length > 0 && wallets[0]?.address ? (
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Connected: {wallets[0].address.slice(0, 4)}...{wallets[0].address.slice(-4)}
+              {/* Screen Display */}
+              <div className="space-y-6">
+                {/* Status Display */}
+                {!currentGame && (
+                  <div className="text-center space-y-4 py-8">
+                    <div className="text-accent text-6xl font-black animate-pulse">404</div>
+                    <p className="text-muted-foreground font-mono uppercase tracking-wider">
+                      No Game Active
                     </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {!ready ? "Loading wallet..." : !authenticated ? "Click to connect wallet" : "Wallet not detected"}
+                    <Button 
+                      onClick={() => window.open("https://x.com/WinButtons", "_blank")} 
+                      variant="outline" 
+                      className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase tracking-wider"
+                    >
+                      Follow @WinButtons
+                    </Button>
+                  </div>
+                )}
+
+                {currentGame?.status === "finished" && (
+                  <div className="text-center space-y-4 py-8">
+                    <div className="text-primary text-5xl font-black">GAME OVER</div>
+                    <p className="text-muted-foreground font-mono">Insert coin for next game</p>
+                    <Button 
+                      onClick={() => window.open("https://x.com/WinButtons", "_blank")} 
+                      variant="outline"
+                      className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase"
+                    >
+                      Follow @WinButtons
+                    </Button>
+                  </div>
+                )}
+
+                {currentGame?.status === "waiting" && (
+                  <div className="text-center py-8">
+                    <div className="text-primary text-4xl font-black mb-4 animate-pulse">
+                      LOADING...
+                    </div>
+                    <div className="flex justify-center gap-2">
+                      <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                )}
+
+                {currentGame?.status === "countdown" && countdown !== null && (
+                  <div className="text-center py-8 space-y-4">
+                    <p className="text-muted-foreground font-mono uppercase tracking-wider text-sm">
+                      Starting In
                     </p>
-                  )}
-                </div>
-                <Button onClick={handleJoinGame} className="relative w-full h-14 text-lg font-bold rounded-full overflow-hidden group border-2 border-primary/50" style={{
-              background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
-              boxShadow: "0 0 40px hsl(145 80% 50% / 0.4), 0 10px 60px -10px hsl(145 80% 50% / 0.6)"
-            }}>
-                  <span className="relative z-10 text-black font-black tracking-wider">
-                    {!authenticated ? "CONNECT WALLET" : "ENTER GAME"}
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                </Button>
-              </div>}
-          </div>
+                    <div 
+                      className="text-8xl font-black tabular-nums text-primary"
+                      style={{
+                        textShadow: `
+                          0 0 20px hsl(145 80% 50%),
+                          0 0 40px hsl(145 80% 50%)
+                        `
+                      }}
+                    >
+                      {formatCountdown(countdown)}
+                    </div>
+                  </div>
+                )}
 
-          {/* Info Grid - Arcade Style */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
-            {/* How it Works */}
-            <div className="relative group p-6 rounded-xl bg-card/40 border-2 border-primary/20 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-transparent to-primary/10 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-3 border border-primary/30">
-                  <span className="text-primary text-xl font-black">?</span>
-                </div>
-                <h3 className="text-lg font-black text-primary mb-2 uppercase tracking-wide">How it Works</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  5 rounds. Each round shows 3 buttons. Pick one. Only 1 is correct.
-                </p>
-              </div>
-            </div>
-
-            {/* Elimination Rule */}
-            <div className="relative group p-6 rounded-xl bg-card/40 border-2 border-accent/20 backdrop-blur-sm hover:border-accent/50 transition-all duration-300">
-              <div className="absolute -inset-1 bg-gradient-to-br from-accent/20 via-transparent to-accent/10 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center mb-3 border border-accent/30">
-                  <span className="text-accent text-xl font-black">✕</span>
-                </div>
-                <h3 className="text-lg font-black text-accent mb-2 uppercase tracking-wide">Elimination</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Wrong button or timeout = <span className="text-accent font-bold">eliminated</span>. No second chances.
-                </p>
-              </div>
-            </div>
-
-            {/* Win Condition */}
-            <div className="relative group p-6 rounded-xl bg-card/40 border-2 border-primary/20 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-transparent to-primary/10 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-3 border border-primary/30">
-                  <span className="text-primary text-xl font-black">★</span>
-                </div>
-                <h3 className="text-lg font-black text-primary mb-2 uppercase tracking-wide">Win Condition</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  First <span className="text-primary font-bold">3 players</span> to survive all 5 rounds win.
-                </p>
-              </div>
-            </div>
-
-            {/* Rewards */}
-            <div className="relative group p-6 rounded-xl bg-card/40 border-2 border-primary/20 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-transparent to-primary/10 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-3 border border-primary/30">
-                  <span className="text-primary text-xl font-black">$</span>
-                </div>
-                <h3 className="text-lg font-black text-primary mb-2 uppercase tracking-wide">Rewards</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Winners get <span className="text-primary font-bold">80%</span> of rewards. 20% goes to growth.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Prize Rules */}
-          <div className="max-w-3xl mx-auto">
-            <div className="relative group p-7 rounded-xl bg-card/40 border-2 border-primary/30 backdrop-blur-sm">
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-accent/10 to-primary/20 rounded-xl opacity-60 group-hover:opacity-90 blur-xl transition-opacity duration-300" />
-              <div className="relative space-y-5">
-                <h3 className="text-xl font-black text-primary text-center mb-5 uppercase tracking-wide">Prize Rules</h3>
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-start gap-4 p-4 rounded-lg bg-background/40 border border-primary/20">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0 animate-glow" />
-                    <p className="text-muted-foreground leading-relaxed">
-                      <span className="text-foreground font-bold">If 0 winners:</span> Funds are gonna be used for buybacks
+                {currentGame?.status === "active" && (
+                  <div className="text-center py-8 space-y-3">
+                    <div className="text-accent text-5xl font-black animate-pulse">
+                      LIVE
+                    </div>
+                    <p className="text-foreground font-mono text-xl">
+                      Round {currentGame.current_round} / {currentGame.total_rounds}
                     </p>
                   </div>
-                  <div className="flex items-start gap-4 p-4 rounded-lg bg-background/40 border border-accent/20">
-                    <div className="w-2 h-2 rounded-full bg-accent mt-2 flex-shrink-0" />
-                    <p className="text-muted-foreground leading-relaxed">
-                      <span className="text-foreground font-bold">If the winner doesn't hold $BUTTONS:</span> 50% of the rewards are given
-                    </p>
+                )}
+
+                {/* Join Controls */}
+                {currentGame && (currentGame.status === "waiting" || currentGame.status === "countdown") && (
+                  <div className="space-y-4 border-t-2 border-primary/20 pt-6">
+                    <div className="space-y-3">
+                      <label className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                        Enter Wallet Address
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Your Solana wallet address"
+                        value={walletAddress}
+                        onChange={(e) => setWalletAddress(e.target.value)}
+                        className="h-12 bg-input/80 border-2 border-border/50 focus:border-primary font-mono text-sm"
+                      />
+                    </div>
+                    
+                    <Button 
+                      onClick={handleJoinGame}
+                      className="w-full h-14 text-lg font-black rounded-xl border-4 border-primary/50 uppercase tracking-wider relative overflow-hidden group"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
+                        boxShadow: "0 0 40px hsl(145 80% 50% / 0.5)",
+                        color: "hsl(0 0% 0%)"
+                      }}
+                    >
+                      <span className="relative z-10">INSERT COIN</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/40 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
+                    </Button>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Contract Address */}
+          {/* Pixel Info Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
+            {[
+              { icon: "►", title: "HOW TO PLAY", text: "5 rounds × 3 buttons. Pick right. Survive.", color: "primary" },
+              { icon: "✕", title: "ELIMINATION", text: "Wrong choice or timeout = GAME OVER", color: "accent" },
+              { icon: "★", title: "VICTORY", text: "First 3 survivors split the prize", color: "primary" },
+              { icon: "$", title: "REWARDS", text: "80% to winners • 20% to treasury", color: "primary" }
+            ].map((card, i) => (
+              <div 
+                key={i}
+                className="relative p-5 rounded-lg border-4 bg-card/60 backdrop-blur-sm hover:scale-105 transition-transform"
+                style={{
+                  borderColor: card.color === "accent" ? "hsl(0 85% 58% / 0.4)" : "hsl(145 80% 50% / 0.4)",
+                  boxShadow: `0 0 20px ${card.color === "accent" ? "hsl(0 85% 58% / 0.2)" : "hsl(145 80% 50% / 0.2)"}`
+                }}
+              >
+                <div 
+                  className="text-4xl font-black mb-2"
+                  style={{ color: card.color === "accent" ? "hsl(0 85% 58%)" : "hsl(145 80% 50%)" }}
+                >
+                  {card.icon}
+                </div>
+                <h3 
+                  className="text-sm font-black mb-2 uppercase tracking-wider font-mono"
+                  style={{ color: card.color === "accent" ? "hsl(0 85% 58%)" : "hsl(145 80% 50%)" }}
+                >
+                  {card.title}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed font-mono">
+                  {card.text}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Special Rules */}
           <div className="max-w-2xl mx-auto">
-            <div className="relative group p-6 rounded-xl bg-card/40 border-2 border-border/30 backdrop-blur-sm hover:border-primary/40 transition-all duration-300">
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
-              <div className="relative space-y-4">
-                <h3 className="text-lg font-black text-foreground text-center uppercase tracking-wide">Contract Address</h3>
-                <div className="flex gap-3">
-                  <Input type="text" value={CONTRACT_ADDRESS} readOnly className="flex-1 h-12 bg-input/60 text-muted-foreground text-xs font-mono border-2 border-border/50 rounded-lg backdrop-blur-sm" />
-                  <Button onClick={handleCopyAddress} variant="outline" size="icon" className="h-12 w-12 border-2 border-primary/30 hover:border-primary hover:bg-primary/20 hover:text-primary transition-all rounded-lg">
-                    <Copy className="h-5 w-5" />
-                  </Button>
+            <div className="p-6 rounded-xl border-4 border-primary/30 bg-card/60 backdrop-blur-sm" style={{
+              boxShadow: "0 0 30px hsl(145 80% 50% / 0.2)"
+            }}>
+              <h3 className="text-2xl font-black text-primary text-center mb-6 uppercase font-mono">
+                ⚠ SPECIAL RULES ⚠
+              </h3>
+              <div className="space-y-3">
+                <div className="flex gap-3 p-4 rounded-lg bg-background/50 border-2 border-primary/20">
+                  <span className="text-primary text-xl">●</span>
+                  <p className="text-sm text-muted-foreground font-mono">
+                    <span className="text-foreground font-bold">NO WINNERS:</span> Treasury buyback initiated
+                  </p>
                 </div>
+                <div className="flex gap-3 p-4 rounded-lg bg-background/50 border-2 border-accent/20">
+                  <span className="text-accent text-xl">●</span>
+                  <p className="text-sm text-muted-foreground font-mono">
+                    <span className="text-foreground font-bold">NON-HOLDER WINS:</span> 50% reward penalty applied
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Token Contract */}
+          <div className="max-w-2xl mx-auto">
+            <div className="p-5 rounded-xl border-4 border-primary/30 bg-card/60 backdrop-blur-sm" style={{
+              boxShadow: "0 0 30px hsl(145 80% 50% / 0.2)"
+            }}>
+              <h3 className="text-base font-black text-primary text-center mb-4 uppercase font-mono tracking-wider">
+                $BUTTONS TOKEN
+              </h3>
+              <div className="flex gap-2">
+                <Input 
+                  type="text" 
+                  value={CONTRACT_ADDRESS} 
+                  readOnly 
+                  className="flex-1 h-11 bg-input/80 text-foreground text-xs font-mono border-2 border-primary/30 focus:border-primary"
+                />
+                <Button 
+                  onClick={handleCopyAddress}
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 border-2 border-primary/40 hover:border-primary hover:bg-primary/20 hover:scale-110 transition-all"
+                >
+                  <Copy className="h-4 w-4 text-primary" />
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Leaderboard Section */}
-      <div className="relative w-full border-t-2 border-primary/20 mt-20">
-        <div className="max-w-5xl mx-auto px-6 py-24">
-          <div className="relative inline-block mb-16 w-full text-center">
-            <h2 className="text-6xl font-black text-primary uppercase tracking-tight" style={{
-            textShadow: "0 0 60px hsl(145 80% 50% / 0.4)"
-          }}>Leaderboard</h2>
-            <div className="absolute -inset-8 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-3xl -z-10 animate-glow" />
+      {/* Hall of Fame */}
+      <div className="relative w-full border-t-4 border-primary/30 mt-20">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <div className="text-center mb-12">
+            <h2 
+              className="text-5xl font-black text-primary uppercase tracking-wider font-mono inline-block"
+              style={{
+                textShadow: `
+                  0 0 20px hsl(145 80% 50%),
+                  0 0 40px hsl(145 80% 50%)
+                `
+              }}
+            >
+              ★ HALL OF FAME ★
+            </h2>
           </div>
 
-          {payouts.length === 0 ? <p className="text-center text-muted-foreground">No payouts yet</p> : <div className="space-y-4">
-              {/* Table Header */}
-              <div className="grid grid-cols-3 gap-6 pb-5 border-b-2 border-primary/40 bg-gradient-to-r from-primary/10 to-transparent p-5 rounded-t-xl">
-                <div className="text-base font-black text-primary uppercase tracking-wider">Winner Wallet</div>
-                <div className="text-base font-black text-primary uppercase tracking-wider">Transaction Hash</div>
-                <div className="text-base font-black text-primary text-right uppercase tracking-wider">Amount</div>
+          {payouts.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🏆</div>
+              <p className="text-muted-foreground font-mono uppercase tracking-wider">
+                No winners yet. Be the first!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Header */}
+              <div className="grid grid-cols-3 gap-4 p-4 border-4 border-primary/40 bg-primary/10 rounded-lg">
+                <div className="text-sm font-black text-primary uppercase tracking-wider font-mono">WINNER</div>
+                <div className="text-sm font-black text-primary uppercase tracking-wider font-mono">TX HASH</div>
+                <div className="text-sm font-black text-primary text-right uppercase tracking-wider font-mono">PRIZE</div>
               </div>
 
-              {/* Table Rows */}
-              {payouts.map((payout, idx) => <div key={payout.id} className="grid grid-cols-3 gap-6 py-5 px-5 border-b border-border/30 hover:bg-card/40 hover:border-primary/20 transition-all group rounded-lg">
-                  <div className="text-sm text-muted-foreground font-mono truncate group-hover:text-foreground transition-colors">
+              {/* Entries */}
+              {payouts.map((payout) => (
+                <div 
+                  key={payout.id} 
+                  className="grid grid-cols-3 gap-4 p-4 border-2 border-border/40 bg-card/40 hover:border-primary/40 hover:bg-card/60 transition-all rounded-lg group"
+                >
+                  <div className="text-xs text-muted-foreground font-mono truncate group-hover:text-primary transition-colors">
                     {payout.winner_wallet}
                   </div>
-                  <a href={`https://etherscan.io/tx/${payout.transaction_hash}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:text-primary-glow font-mono truncate flex items-center gap-2 transition-colors font-semibold">
-                    {payout.transaction_hash.slice(0, 10)}...
-                    <ExternalLink className="h-4 w-4" />
+                  <a 
+                    href={`https://etherscan.io/tx/${payout.transaction_hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:text-primary-glow font-mono truncate flex items-center gap-2 font-bold"
+                  >
+                    {payout.transaction_hash.slice(0, 12)}...
+                    <ExternalLink className="h-3 w-3" />
                   </a>
-                  <div className="text-sm text-muted-foreground text-right font-mono group-hover:text-primary transition-colors font-bold">
+                  <div className="text-xs text-foreground text-right font-mono font-black group-hover:text-primary transition-colors">
                     {payout.amount}
                   </div>
-                </div>)}
-            </div>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>;
