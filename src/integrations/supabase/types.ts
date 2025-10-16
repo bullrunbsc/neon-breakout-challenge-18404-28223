@@ -95,6 +95,7 @@ export type Database = {
           current_round: number
           ended_at: string | null
           id: string
+          round_config: Json | null
           started_at: string | null
           status: Database["public"]["Enums"]["game_status"]
           total_rounds: number
@@ -106,6 +107,7 @@ export type Database = {
           current_round?: number
           ended_at?: string | null
           id?: string
+          round_config?: Json | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["game_status"]
           total_rounds?: number
@@ -117,6 +119,7 @@ export type Database = {
           current_round?: number
           ended_at?: string | null
           id?: string
+          round_config?: Json | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["game_status"]
           total_rounds?: number
