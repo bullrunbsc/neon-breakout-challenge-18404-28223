@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
 import { PublicKey } from "@solana/web3.js";
 
-const CONTRACT_ADDRESS = "FFPMq7uQ4J26hDrjwHQHd9DhfdsUJmS6v3L4dzHTpump";
+const CONTRACT_ADDRESS = "FTNjJMVZs49H9QQd5Rn7NQqNvdZNxVeTNnSbsUwXpump";
 const Landing = () => {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState<number | null>(null);
