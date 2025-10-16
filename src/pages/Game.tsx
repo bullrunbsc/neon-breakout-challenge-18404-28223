@@ -89,6 +89,7 @@ const Game = () => {
     
     // Only auto-refresh when not submitted and not a winner
     let refreshInterval: NodeJS.Timeout | null = null;
+    let progressionInterval: NodeJS.Timeout | null = null;
     
     if (!hasSubmitted && gameState !== "winner") {
       refreshInterval = setInterval(() => {
@@ -96,11 +97,21 @@ const Game = () => {
           fetchGameData();
         }
       }, 3000);
+      
+      // Trigger game progression check every 3 seconds
+      progressionInterval = setInterval(async () => {
+        try {
+          await supabase.functions.invoke('game-progression');
+        } catch (error) {
+          console.error("Error triggering game progression:", error);
+        }
+      }, 3000);
     }
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (refreshInterval) clearInterval(refreshInterval);
+      if (progressionInterval) clearInterval(progressionInterval);
     };
   }, [gameId, wallet, hasSubmitted, gameState]);
 
