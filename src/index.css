@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Dark theme with red gradient accents */
+    --background: 0 0% 3%; /* Deep black */
+    --foreground: 0 0% 98%; /* Almost white */
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Vibrant red palette */
+    --primary: 0 85% 58%;
+    --primary-glow: 0 100% 70%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 85% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 8%;
+    --ring: 0 85% 58%;
+
+    --radius: 0.5rem;
+
+    /* Red gradient tokens */
+    --gradient-red-primary: linear-gradient(135deg, hsl(0 85% 58%), hsl(0 100% 70%));
+    --gradient-red-subtle: linear-gradient(180deg, hsl(0 0% 3%), hsl(0 20% 6%));
+    --gradient-red-glow: radial-gradient(circle at top, hsl(0 85% 58% / 0.15), transparent 60%);
+    
+    /* Shadows with red glow */
+    --shadow-red-glow: 0 0 40px hsl(0 85% 58% / 0.3);
+    --shadow-red-intense: 0 10px 60px -10px hsl(0 85% 58% / 0.5);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
