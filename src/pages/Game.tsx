@@ -29,10 +29,10 @@ const Game = () => {
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [activePlayers, setActivePlayers] = useState(0);
   const [pulse, setPulse] = useState(false);
-  
+
   // Use ref to track submission status for realtime subscriptions
   const hasSubmittedRef = useRef(false);
-  
+
   // Sync ref with state
   useEffect(() => {
     hasSubmittedRef.current = hasSubmitted;
@@ -41,28 +41,28 @@ const Game = () => {
   const formatCountdown = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const fetchPlayerCounts = async () => {
     if (!gameId) return;
-    
+
     // Get total players count using public view
     const { count: total } = await supabase
       .from("players_public")
       .select("*", { count: "exact", head: true })
       .eq("game_id", gameId);
-    
+
     // Get active players count using public view
     const { count: active } = await supabase
       .from("players_public")
       .select("*", { count: "exact", head: true })
       .eq("game_id", gameId)
       .eq("status", "active");
-    
+
     setTotalPlayers(total || 0);
     setActivePlayers(active || 0);
-    
+
     // Trigger pulse animation
     setPulse(true);
     setTimeout(() => setPulse(false), 500);
@@ -79,7 +79,7 @@ const Game = () => {
 
     // Backup polling every 2 seconds during active gameplay to catch missed realtime updates
     const pollInterval = setInterval(() => {
-      if (game && game.status !== 'waiting' && game.status !== 'finished') {
+      if (game && game.status !== "waiting" && game.status !== "finished") {
         console.log("⏰ Backup polling - checking for updates");
         fetchGameData();
       }
@@ -102,27 +102,27 @@ const Game = () => {
     }
   }, [gameState, player?.status, navigate]);
 
-
   const fetchGameData = async () => {
     // Don't fetch if player is already a winner or eliminated - prevents glitching
-    if (gameState === "winner" || player?.status === "winner" || gameState === "eliminated" || player?.status === "eliminated") {
+    if (
+      gameState === "winner" ||
+      player?.status === "winner" ||
+      gameState === "eliminated" ||
+      player?.status === "eliminated"
+    ) {
       console.log("Player is winner/eliminated, skipping fetch to prevent glitching");
       return;
     }
-    
+
     // Fetch player counts
     await fetchPlayerCounts();
-    
+
     // Fetch game
-    const { data: gameData } = await supabase
-      .from("games")
-      .select("*")
-      .eq("id", gameId)
-      .single();
+    const { data: gameData } = await supabase.from("games").select("*").eq("id", gameId).single();
 
     if (gameData) {
       setGame(gameData);
-      
+
       // Handle different game statuses
       if (gameData.status === "finished") {
         // Fetch all winners
@@ -132,7 +132,7 @@ const Game = () => {
           .eq("game_id", gameId)
           .eq("status", "winner")
           .order("winner_rank", { ascending: true });
-        
+
         if (allWinners && allWinners.length > 0) {
           setWinners(allWinners);
           setGameState("winner");
@@ -163,7 +163,7 @@ const Game = () => {
 
     if (playerData) {
       setPlayer(playerData);
-      
+
       if (playerData.status === "eliminated") {
         setGameState("eliminated");
       } else if (playerData.status === "winner") {
@@ -182,12 +182,11 @@ const Game = () => {
     // Fetch current round if game is active
     if (gameData?.status === "active" && gameData.current_round > 0) {
       console.log("Fetching round for game:", gameId, "round:", gameData.current_round);
-      
-      const { data: roundData, error: roundError } = await supabase
-        .rpc("get_round_safe", {
-          p_game_id: gameId,
-          p_round_number: gameData.current_round,
-        });
+
+      const { data: roundData, error: roundError } = await supabase.rpc("get_round_safe", {
+        p_game_id: gameId,
+        p_round_number: gameData.current_round,
+      });
 
       console.log("Round data received:", roundData, "Error:", roundError);
 
@@ -198,7 +197,7 @@ const Game = () => {
       if (roundData && Array.isArray(roundData) && roundData.length > 0) {
         const round = roundData[0];
         console.log("Setting current round:", round);
-        
+
         // Check if already submitted for this specific round
         const { data: existingAnswer } = await supabase
           .from("answers")
@@ -206,11 +205,11 @@ const Game = () => {
           .eq("round_id", round.id)
           .eq("player_id", playerData?.id)
           .maybeSingle();
-        
+
         // Only update state if this is a new round or we need to refresh
         setCurrentRound(round);
         setGameState("in_round");
-        
+
         // Reset submission state for new round, or restore if already submitted
         if (existingAnswer) {
           console.log("Found existing answer for round", round.round_number);
@@ -243,24 +242,30 @@ const Game = () => {
             console.log("Skipping game update - player is winner");
             return;
           }
-          
+
           const newGame = payload.new as any;
           const oldGame = payload.old as any;
-          
+
           // Reset submission state when round number changes (new round started)
           if (newGame?.current_round !== oldGame?.current_round) {
-            console.log("Round changed from", oldGame?.current_round, "to", newGame?.current_round, "- resetting submission state");
+            console.log(
+              "Round changed from",
+              oldGame?.current_round,
+              "to",
+              newGame?.current_round,
+              "- resetting submission state",
+            );
             setHasSubmitted(false);
             setSubmissionResult(null);
             setSelectedButton(null);
           }
-          
+
           setGame(newGame);
-          
+
           // Handle game finished status
           if (newGame?.status === "finished") {
             console.log("Game finished, fetching final winners");
-            
+
             // Fetch all winners
             const { data: allWinners } = await supabase
               .from("players")
@@ -268,7 +273,7 @@ const Game = () => {
               .eq("game_id", gameId)
               .eq("status", "winner")
               .order("winner_rank", { ascending: true });
-            
+
             if (allWinners && allWinners.length > 0) {
               setWinners(allWinners);
               setGameState("winner");
@@ -278,7 +283,7 @@ const Game = () => {
             }
             return;
           }
-          
+
           // If game goes to break status
           if (newGame?.status === "break") {
             setGameState("break");
@@ -291,11 +296,11 @@ const Game = () => {
               setBreakTimeLeft(timeLeft);
             }
           }
-          
+
           // If game becomes active, fetch the full game data
           if (newGame?.status === "active") {
             console.log("Game became active, fetching full data...");
-            
+
             // Check player status from database to avoid race conditions
             const { data: currentPlayer } = await supabase
               .from("players")
@@ -303,17 +308,17 @@ const Game = () => {
               .eq("game_id", gameId)
               .eq("wallet_address", wallet)
               .single();
-            
+
             // Don't show new rounds to eliminated or winner players
             if (currentPlayer?.status === "eliminated" || currentPlayer?.status === "winner") {
               console.log("Player is eliminated/winner, not showing new round");
               return;
             }
-            
+
             // Force a full refresh to get the round
             await fetchGameData();
           }
-        }
+        },
       )
       .subscribe();
 
@@ -329,17 +334,17 @@ const Game = () => {
         },
         async (payload) => {
           const updatedPlayer = payload.new as any;
-          
+
           // If current player was updated
           if (updatedPlayer.wallet_address === wallet) {
             setPlayer(updatedPlayer);
-            
+
             // Handle elimination of current player
             if (updatedPlayer.status === "eliminated") {
               console.log("Current player eliminated");
               setGameState("eliminated");
             }
-            
+
             // Handle current player becoming a winner
             if (updatedPlayer.status === "winner") {
               console.log("Current player is a winner!");
@@ -350,12 +355,12 @@ const Game = () => {
                 .eq("game_id", gameId)
                 .eq("status", "winner")
                 .order("winner_rank", { ascending: true });
-              
+
               setWinners(allWinners || []);
               setGameState("winner");
             }
           }
-          
+
           // If ANY player becomes a winner, fetch the updated winner list
           // This ensures all clients see the latest winners
           if (updatedPlayer.status === "winner") {
@@ -366,15 +371,15 @@ const Game = () => {
               .eq("game_id", gameId)
               .eq("status", "winner")
               .order("winner_rank", { ascending: true });
-            
+
             setWinners(allWinners || []);
-            
+
             // If current player is already a winner, make sure we stay on winner screen
             if (player?.status === "winner") {
               setGameState("winner");
             }
           }
-        }
+        },
       )
       .subscribe();
 
@@ -394,7 +399,7 @@ const Game = () => {
             console.log("Skipping round update - player is winner");
             return;
           }
-          
+
           if (payload.new.round_number === game?.current_round) {
             setCurrentRound(payload.new);
             setGameState("in_round");
@@ -402,7 +407,7 @@ const Game = () => {
             setSubmissionResult(null);
             setSelectedButton(null);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -418,7 +423,7 @@ const Game = () => {
         },
         () => {
           fetchPlayerCounts();
-        }
+        },
       )
       .subscribe();
 
@@ -438,11 +443,11 @@ const Game = () => {
       if (gameState === "winner") {
         return;
       }
-      
+
       const now = Date.now();
       const start = new Date(currentRound.starts_at).getTime();
       const end = new Date(currentRound.ends_at).getTime();
-      
+
       // If we're before the round starts, show countdown to start
       if (now < start) {
         const diff = Math.max(0, Math.ceil((start - now) / 1000));
@@ -451,8 +456,8 @@ const Game = () => {
         // Round has started, show countdown to end
         const diff = Math.max(0, Math.ceil((end - now) / 1000));
         setTimeLeft(diff);
-        
-      // When time reaches 0, poll once to ensure smooth transition
+
+        // When time reaches 0, poll once to ensure smooth transition
         if (diff === 0 && timeLeft > 0) {
           console.log("Round timer reached 0, fetching game update...");
           fetchGameData();
@@ -471,7 +476,7 @@ const Game = () => {
       const now = Date.now();
       const timeLeft = Math.max(0, Math.ceil((breakEndTime.getTime() - now) / 1000));
       setBreakTimeLeft(timeLeft);
-      
+
       // When break ends, poll once to ensure smooth transition
       if (timeLeft === 0 && breakTimeLeft > 0) {
         console.log("Break timer reached 0, fetching game update...");
@@ -490,12 +495,12 @@ const Game = () => {
       const now = Date.now();
       const countdownStart = new Date(game.started_at).getTime();
       const elapsedSeconds = Math.floor((now - countdownStart) / 1000);
-      
+
       // Use admin-set countdown duration (defaults to 1 minute)
       const countdownDuration = (game.countdown_minutes || 1) * 60;
       const remainingSeconds = Math.max(0, countdownDuration - elapsedSeconds);
       setCountdownTime(remainingSeconds);
-      
+
       // Poll once when countdown reaches 0 to ensure game starts
       if (remainingSeconds === 0 && countdownTime > 0) {
         console.log("Countdown reached 0, fetching game update...");
@@ -508,7 +513,7 @@ const Game = () => {
 
   const handleSubmitAnswer = async () => {
     console.log("Submit clicked. Selected button:", selectedButton, "Current round:", currentRound, "Player:", player);
-    
+
     if (!selectedButton) {
       toast.error("Please select a button");
       return;
@@ -518,7 +523,7 @@ const Game = () => {
       console.log("Missing data - currentRound:", currentRound, "player:", player);
       return;
     }
-    
+
     if (hasSubmitted) {
       toast.error("You already submitted an answer for this round");
       return;
@@ -526,12 +531,11 @@ const Game = () => {
 
     // Call secure server-side function to validate answer
     // This prevents cheating by never exposing the correct answer to the client
-    const { data: validationResult, error: validationError } = await supabase
-      .rpc("validate_answer", {
-        p_round_id: currentRound.id,
-        p_player_id: player.id,
-        p_selected_door: selectedButton,
-      });
+    const { data: validationResult, error: validationError } = await supabase.rpc("validate_answer", {
+      p_round_id: currentRound.id,
+      p_player_id: player.id,
+      p_selected_door: selectedButton,
+    });
 
     if (validationError) {
       toast.error("Failed to validate answer");
@@ -540,7 +544,7 @@ const Game = () => {
     }
 
     const result = validationResult?.[0];
-    
+
     if (result?.already_submitted) {
       toast.error("You already submitted an answer for this round");
       return;
@@ -550,14 +554,12 @@ const Game = () => {
 
     if (isCorrect) {
       // For correct answers, insert with is_correct = true
-      const { error } = await supabase
-        .from("answers")
-        .insert({
-          round_id: currentRound.id,
-          player_id: player.id,
-          selected_door: selectedButton,
-          is_correct: true,
-        });
+      const { error } = await supabase.from("answers").insert({
+        round_id: currentRound.id,
+        player_id: player.id,
+        selected_door: selectedButton,
+        is_correct: true,
+      });
 
       if (error) {
         toast.error("Failed to submit answer");
@@ -580,7 +582,7 @@ const Game = () => {
         if (winnerCount < 3) {
           // Assign next rank (1, 2, or 3)
           const nextRank = winnerCount + 1;
-          
+
           await supabase
             .from("players")
             .update({
@@ -646,14 +648,13 @@ const Game = () => {
       }
     } else {
       // For wrong answers, immediately eliminate the player
-      const { error: answerError } = await supabase
-        .from("answers")
-        .insert({
-          round_id: currentRound.id,
-          player_id: player.id,
-          selected_door: selectedButton,
-          is_correct: false,
-           // Immediately eliminate player and force realtime update
+      const { error: answerError } = await supabase.from("answers").insert({
+        round_id: currentRound.id,
+        player_id: player.id,
+        selected_door: selectedButton,
+        is_correct: false,
+      });
+      // Immediately eliminate player and force realtime update
       const { error: playerError } = await supabase
         .from("players")
         .update({
@@ -670,27 +671,22 @@ const Game = () => {
         setGameState("eliminated");
 
         // Realtime trigger should fire for admin immediately
-        await supabase
-          .channel("players-status")
-          .send({
-            type: "broadcast",
-            event: "player_eliminated",
-            payload: { game_id: gameId, player_id: player.id },
-          });
+        await supabase.channel("players-status").send({
+          type: "broadcast",
+          event: "player_eliminated",
+          payload: { game_id: gameId, player_id: player.id },
+        });
 
         toast.error("✗ Wrong answer! You've been eliminated.");
       }
 
       setHasSubmitted(true);
       setSubmissionResult("wrong");
-      
+
       // Redirect after 3 seconds
       setTimeout(() => {
         navigate("/");
       }, 3000);
-
-        
-        });
 
       if (answerError) {
         toast.error("Failed to submit answer");
@@ -715,7 +711,7 @@ const Game = () => {
       setSubmissionResult("wrong");
       setGameState("eliminated");
       toast.error("✗ Wrong answer! You've been eliminated.");
-      
+
       // Redirect after 3 seconds
       setTimeout(() => {
         navigate("/");
@@ -731,31 +727,32 @@ const Game = () => {
           <div className="absolute inset-0 scanlines opacity-20" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/10 rounded-full blur-[150px] animate-pulse" />
         </div>
-        
+
         <div className="text-center space-y-8 relative z-10 px-4">
-          <h1 className="text-7xl md:text-9xl font-black uppercase tracking-wider" style={{
-            color: "hsl(0 85% 58%)",
-            textShadow: `
+          <h1
+            className="text-7xl md:text-9xl font-black uppercase tracking-wider"
+            style={{
+              color: "hsl(0 85% 58%)",
+              textShadow: `
               0 0 20px hsl(0 85% 58%),
               0 0 40px hsl(0 85% 58%),
               0 0 80px hsl(0 85% 58%),
               4px 4px 0px hsl(0 85% 58% / 0.5)
             `,
-            fontFamily: "'Press Start 2P', 'Orbitron', monospace"
-          }}>
+              fontFamily: "'Press Start 2P', 'Orbitron', monospace",
+            }}
+          >
             GAME OVER
           </h1>
-          
+
           <div className="space-y-4">
             <p className="text-3xl font-bold text-foreground font-mono uppercase tracking-wider">
               You Have Been Eliminated
             </p>
-            
+
             <div className="flex items-center justify-center gap-2 text-muted-foreground font-mono">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-              <p className="text-lg animate-pulse">
-                Redirecting to home...
-              </p>
+              <p className="text-lg animate-pulse">Redirecting to home...</p>
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
             </div>
           </div>
@@ -769,16 +766,14 @@ const Game = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-blue-950 to-black relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent animate-pulse" />
-        
+
         <div className="text-center space-y-8 relative z-10 px-4 max-w-4xl mx-auto">
           {/* Large glowing trophy with pulse animation */}
           <div className="relative inline-block">
             <div className="absolute inset-0 blur-3xl bg-yellow-500/30 animate-pulse" />
-            <div className="text-9xl animate-pulse relative drop-shadow-[0_0_40px_rgba(250,204,21,0.6)]">
-              🏆
-            </div>
+            <div className="text-9xl animate-pulse relative drop-shadow-[0_0_40px_rgba(250,204,21,0.6)]">🏆</div>
           </div>
-          
+
           {/* Winner text with neon glow */}
           <div className="space-y-4">
             <h1 className="text-5xl md:text-6xl font-black tracking-tight">
@@ -794,13 +789,14 @@ const Game = () => {
           {/* Winners List */}
           <div className="space-y-4 mt-8">
             {winners.map((winner, index) => (
-              <div 
+              <div
                 key={winner.id}
                 className="bg-white/5 backdrop-blur border border-white/10 rounded-lg p-6 hover:bg-white/10 transition-all"
               >
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <span className="text-2xl font-bold text-yellow-400">
-                    {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {index + 1}{index === 0 ? "st" : index === 1 ? "nd" : "rd"}
+                    {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"} {index + 1}
+                    {index === 0 ? "st" : index === 1 ? "nd" : "rd"}
                   </span>
                   <span className="text-lg md:text-xl font-mono text-white/90 break-all flex-1 text-left">
                     {winner.wallet_address}
@@ -833,7 +829,7 @@ const Game = () => {
           Players: {activePlayers} / {totalPlayers}
         </span>
       </div>
-      
+
       <div className="max-w-2xl w-full space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -849,25 +845,28 @@ const Game = () => {
               <div className="absolute inset-0 scanlines opacity-20" />
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
             </div>
-            
+
             <div className="relative z-10 space-y-6">
-              <div className="text-5xl font-black text-primary animate-pulse uppercase tracking-wider" style={{
-                fontFamily: "'Press Start 2P', 'Orbitron', monospace",
-                textShadow: "0 0 20px hsl(145 80% 50%), 0 0 40px hsl(145 80% 50%)"
-              }}>
+              <div
+                className="text-5xl font-black text-primary animate-pulse uppercase tracking-wider"
+                style={{
+                  fontFamily: "'Press Start 2P', 'Orbitron', monospace",
+                  textShadow: "0 0 20px hsl(145 80% 50%), 0 0 40px hsl(145 80% 50%)",
+                }}
+              >
                 LOADING
               </div>
-              
+
               <div className="flex justify-center gap-3">
-                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
-              
+
               <p className="text-lg text-muted-foreground font-mono uppercase tracking-wider">
                 Admin will start game soon
               </p>
-              
+
               <Button
                 onClick={fetchGameData}
                 variant="outline"
@@ -886,22 +885,28 @@ const Game = () => {
               <div className="absolute inset-0 scanlines opacity-20" />
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
             </div>
-            
+
             <div className="relative z-10 space-y-6">
               <p className="text-2xl text-muted-foreground font-mono uppercase tracking-wider">Game Starts In</p>
-              <p className="text-9xl font-black tabular-nums" style={{
-                color: "hsl(145 80% 50%)",
-                textShadow: `
+              <p
+                className="text-9xl font-black tabular-nums"
+                style={{
+                  color: "hsl(145 80% 50%)",
+                  textShadow: `
                   0 0 20px hsl(145 80% 50%),
                   0 0 40px hsl(145 80% 50%),
                   0 0 80px hsl(145 80% 50%)
-                `
-              }}>
+                `,
+                }}
+              >
                 {formatCountdown(countdownTime)}
               </p>
-              <p className="text-4xl text-primary animate-pulse font-black uppercase tracking-wider" style={{
-                fontFamily: "'Press Start 2P', 'Orbitron', monospace"
-              }}>
+              <p
+                className="text-4xl text-primary animate-pulse font-black uppercase tracking-wider"
+                style={{
+                  fontFamily: "'Press Start 2P', 'Orbitron', monospace",
+                }}
+              >
                 GET READY
               </p>
             </div>
@@ -915,28 +920,37 @@ const Game = () => {
               <div className="absolute inset-0 scanlines opacity-20" />
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-accent/10 rounded-full blur-[100px] animate-pulse" />
             </div>
-            
+
             <div className="relative z-10 space-y-6">
-              <div className="text-4xl font-black uppercase tracking-wider" style={{
-                color: "hsl(145 80% 50%)",
-                textShadow: "0 0 20px hsl(145 80% 50%)"
-              }}>
+              <div
+                className="text-4xl font-black uppercase tracking-wider"
+                style={{
+                  color: "hsl(145 80% 50%)",
+                  textShadow: "0 0 20px hsl(145 80% 50%)",
+                }}
+              >
                 ✓ Round {game.current_round} Complete!
               </div>
-              
-              <div className="text-9xl font-black tabular-nums animate-pulse" style={{
-                color: "hsl(145 80% 50%)",
-                textShadow: `
+
+              <div
+                className="text-9xl font-black tabular-nums animate-pulse"
+                style={{
+                  color: "hsl(145 80% 50%)",
+                  textShadow: `
                   0 0 30px hsl(145 80% 50%),
                   0 0 60px hsl(145 80% 50%)
-                `
-              }}>
+                `,
+                }}
+              >
                 {breakTimeLeft}
               </div>
-              
-              <p className="text-3xl text-primary font-bold uppercase tracking-wider" style={{
-                fontFamily: "'Press Start 2P', 'Orbitron', monospace"
-              }}>
+
+              <p
+                className="text-3xl text-primary font-bold uppercase tracking-wider"
+                style={{
+                  fontFamily: "'Press Start 2P', 'Orbitron', monospace",
+                }}
+              >
                 Next Round Soon
               </p>
             </div>
@@ -947,9 +961,7 @@ const Game = () => {
           <div className="space-y-8">
             {/* Big Round Number */}
             <div className="text-center">
-              <div className="text-9xl font-black neon-glow leading-none">
-                {game.current_round}
-              </div>
+              <div className="text-9xl font-black neon-glow leading-none">{game.current_round}</div>
               <div className="text-2xl text-muted-foreground mt-4">
                 Round {game.current_round} of {game.total_rounds}
               </div>
@@ -975,7 +987,8 @@ const Game = () => {
                         className="h-full bg-primary transition-all duration-300"
                         style={{
                           width: `${(() => {
-                            const totalMs = new Date(currentRound.ends_at).getTime() - new Date(currentRound.starts_at).getTime();
+                            const totalMs =
+                              new Date(currentRound.ends_at).getTime() - new Date(currentRound.starts_at).getTime();
                             const leftMs = Math.max(0, new Date(currentRound.ends_at).getTime() - Date.now());
                             return (leftMs / totalMs) * 100;
                           })()}%`,
@@ -993,12 +1006,8 @@ const Game = () => {
                 <>
                   {Date.now() < new Date(currentRound.starts_at).getTime() ? (
                     <div className="text-center space-y-4">
-                      <div className="text-3xl font-bold text-primary animate-pulse">
-                        Round starting soon...
-                      </div>
-                      <p className="text-lg text-muted-foreground">
-                        Pick wisely. One button leads forward.
-                      </p>
+                      <div className="text-3xl font-bold text-primary animate-pulse">Round starting soon...</div>
+                      <p className="text-lg text-muted-foreground">Pick wisely. One button leads forward.</p>
                     </div>
                   ) : (
                     <>
@@ -1035,7 +1044,7 @@ const Game = () => {
                         className="w-full h-16 text-2xl font-bold bg-primary hover:bg-primary/90 neon-border disabled:opacity-50 disabled:cursor-not-allowed"
                         size="lg"
                       >
-                        CONFIRM BUTTON {selectedButton || '?'}
+                        CONFIRM BUTTON {selectedButton || "?"}
                       </Button>
                     </>
                   )}
@@ -1048,7 +1057,7 @@ const Game = () => {
                       const isSelected = selectedButton === button;
                       const isCorrect = submissionResult === "correct" && isSelected;
                       const isWrong = !isCorrect;
-                      
+
                       return (
                         <div
                           key={button}
@@ -1056,40 +1065,36 @@ const Game = () => {
                             isCorrect
                               ? "border-green-500 bg-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.8)] scale-110"
                               : isWrong
-                              ? "border-red-500 bg-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.8)]"
-                              : "border-border bg-card/50"
+                                ? "border-red-500 bg-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.8)]"
+                                : "border-border bg-card/50"
                           }`}
                         >
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className={`text-6xl font-black ${
-                              isCorrect ? "text-green-400" : isWrong ? "text-red-400" : "text-muted"
-                            }`}>
+                            <div
+                              className={`text-6xl font-black ${
+                                isCorrect ? "text-green-400" : isWrong ? "text-red-400" : "text-muted"
+                              }`}
+                            >
                               {button}
                             </div>
                           </div>
                           {isSelected && (
-                            <div className="absolute -top-2 -right-2 text-3xl">
-                              {isCorrect ? "✓" : "✗"}
-                            </div>
+                            <div className="absolute -top-2 -right-2 text-3xl">{isCorrect ? "✓" : "✗"}</div>
                           )}
                         </div>
                       );
                     })}
                   </div>
-                  
+
                   <div className="text-center space-y-4">
                     {submissionResult === "correct" ? (
                       <>
                         <div className="text-6xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.8)]">
                           ✓ CORRECT
                         </div>
-                        <p className="text-xl text-muted-foreground">
-                          Waiting for round to end...
-                        </p>
+                        <p className="text-xl text-muted-foreground">Waiting for round to end...</p>
                         {timeLeft === 0 && (
-                          <p className="text-lg text-primary animate-pulse">
-                            Admin will start next round soon
-                          </p>
+                          <p className="text-lg text-primary animate-pulse">Admin will start next round soon</p>
                         )}
                       </>
                     ) : (
@@ -1097,14 +1102,12 @@ const Game = () => {
                         <div className="text-6xl font-black text-red-400 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">
                           ✗ ELIMINATED
                         </div>
-                        <p className="text-xl text-muted-foreground">
-                          You will be eliminated when the round ends
-                        </p>
-                    </>
-                  )}
+                        <p className="text-xl text-muted-foreground">You will be eliminated when the round ends</p>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </div>
         )}
