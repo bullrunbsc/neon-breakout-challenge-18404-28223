@@ -81,11 +81,17 @@ const Landing = () => {
     if (!currentGame) return;
     if (currentGame.status === "countdown" && currentGame.started_at) {
       const interval = setInterval(() => {
-        const now = new Date().getTime();
-        const start = new Date(currentGame.started_at).getTime();
-        const diff = Math.max(0, Math.floor((start - now) / 1000));
-        setCountdown(diff);
-        if (diff === 0) {
+        const now = Date.now();
+        const countdownStart = new Date(currentGame.started_at).getTime();
+        const elapsedSeconds = Math.floor((now - countdownStart) / 1000);
+        
+        // Use admin-set countdown duration (defaults to 1 minute)
+        const countdownDuration = (currentGame.countdown_minutes || 1) * 60;
+        const remainingSeconds = Math.max(0, countdownDuration - elapsedSeconds);
+        
+        setCountdown(remainingSeconds);
+        
+        if (remainingSeconds === 0) {
           clearInterval(interval);
         }
       }, 100);
