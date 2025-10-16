@@ -77,19 +77,7 @@ const Game = () => {
     fetchGameData();
     subscribeToChanges();
 
-    // Refresh game data when tab becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log("Tab became visible, refreshing game data");
-        fetchGameData();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
+    // Realtime subscriptions will keep data in sync automatically
   }, [gameId, wallet, hasSubmitted, gameState]);
 
   // Auto-redirect eliminated players to home after 3 seconds
@@ -455,10 +443,9 @@ const Game = () => {
         const diff = Math.max(0, Math.ceil((end - now) / 1000));
         setTimeLeft(diff);
         
-        // When time reaches 0, fetch fresh game data to transition smoothly
+      // When time reaches 0, realtime will handle the transition
         if (diff === 0) {
-          console.log("Round timer reached 0, fetching game update...");
-          fetchGameData();
+          console.log("Round timer reached 0, waiting for realtime update...");
         }
       }
     }, 1000);
@@ -475,10 +462,9 @@ const Game = () => {
       const timeLeft = Math.max(0, Math.ceil((breakEndTime.getTime() - now) / 1000));
       setBreakTimeLeft(timeLeft);
       
-      // When break ends, fetch fresh game data to transition smoothly
+      // When break ends, realtime will handle the transition
       if (timeLeft === 0) {
-        console.log("Break timer reached 0, fetching game update...");
-        fetchGameData();
+        console.log("Break timer reached 0, waiting for realtime update...");
       }
     }, 1000);
 
@@ -495,10 +481,9 @@ const Game = () => {
       const diff = Math.max(0, Math.floor((start - now) / 1000));
       setCountdownTime(diff);
       
-      // Poll for game status change when countdown is at 0
+      // Realtime will handle the transition when countdown reaches 0
       if (diff === 0) {
-        console.log("Countdown reached 0, polling for game update...");
-        fetchGameData();
+        console.log("Countdown reached 0, waiting for realtime update...");
       }
     }, 100);
 
