@@ -168,7 +168,8 @@ async function startRound(supabase: any, gameId: string, roundNumber: number, co
 }
 
 async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNumber: number, gameData: any) {
-  console.log("Checking answers for round:", roundNumber);
+  console.log("=== CHECKING ANSWERS FOR ROUND", roundNumber, "===");
+  console.log("Game ID:", gameData.id, "Total rounds:", gameData.total_rounds);
 
   // Get all active players
   const { data: activePlayers } = await supabase
@@ -177,12 +178,16 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
     .eq("game_id", gameData.id)
     .eq("status", "active");
 
+  console.log("Active players before elimination:", activePlayers?.length || 0);
+
   if (!activePlayers || activePlayers.length === 0) {
-    console.log("No active players");
+    console.log("No active players found - ending game");
+    await supabase
+      .from("games")
+      .update({ status: "finished", ended_at: new Date().toISOString() })
+      .eq("id", gameData.id);
     return;
   }
-
-  console.log("Active players:", activePlayers.length);
 
   // Get answers for this round
   const { data: answers } = await supabase
@@ -191,6 +196,7 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
     .eq("round_id", roundId);
 
   console.log("Answers submitted:", answers?.length || 0);
+  console.log("Correct answers:", answers?.filter((a: any) => a.is_correct).length || 0);
 
   const answeredPlayerIds = new Set(answers?.map((a: any) => a.player_id) || []);
   const correctPlayerIds = new Set(
@@ -198,9 +204,10 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
   );
 
   // Eliminate players who didn't answer or answered wrong
+  let eliminatedCount = 0;
   for (const player of activePlayers) {
     if (!answeredPlayerIds.has(player.id) || !correctPlayerIds.has(player.id)) {
-      console.log("Eliminating player:", player.wallet_address);
+      console.log("Eliminating player:", player.wallet_address, "answered:", answeredPlayerIds.has(player.id), "correct:", correctPlayerIds.has(player.id));
       await supabase
         .from("players")
         .update({
@@ -208,8 +215,11 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
           eliminated_at: new Date().toISOString(),
         })
         .eq("id", player.id);
+      eliminatedCount++;
     }
   }
+
+  console.log("Eliminated", eliminatedCount, "players this round");
 
   // Get remaining active players
   const { data: remainingPlayers } = await supabase
@@ -218,11 +228,11 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
     .eq("game_id", gameData.id)
     .eq("status", "active");
 
-  console.log("Remaining players:", remainingPlayers?.length || 0);
+  console.log("Remaining active players after elimination:", remainingPlayers?.length || 0);
 
   // Check if game should end
   if (!remainingPlayers || remainingPlayers.length === 0) {
-    console.log("No players left, ending game");
+    console.log("❌ No players left, ending game");
     await supabase
       .from("games")
       .update({ status: "finished", ended_at: new Date().toISOString() })
@@ -232,27 +242,34 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
 
   // Only determine winners if we've completed all rounds
   if (roundNumber >= gameData.total_rounds) {
-    console.log("All rounds completed, determining winners");
+    console.log("✅ All rounds completed (round", roundNumber, "of", gameData.total_rounds, "), determining winners");
     await determineWinner(supabase, gameData.id, remainingPlayers);
     return;
   }
   
   // If 3 or fewer players remain but rounds aren't complete, continue to next round
+  console.log(`📊 ${remainingPlayers.length} players remain. Round ${roundNumber} of ${gameData.total_rounds} complete.`);
   if (remainingPlayers.length <= 3) {
-    console.log(`Only ${remainingPlayers.length} players remain, but continuing to complete all rounds`);
+    console.log(`⚠️ Only ${remainingPlayers.length} players remain, but continuing to complete all ${gameData.total_rounds} rounds`);
   }
 
   // Start break period before next round
-  console.log("Starting break period");
+  console.log("⏸️ Starting 30-second break period before round", roundNumber + 1);
   const breakEnd = new Date(Date.now() + 30000); // 30 seconds
   
-  await supabase
+  const { error: breakError } = await supabase
     .from("games")
     .update({
       status: "break",
       break_ends_at: breakEnd.toISOString(),
     })
     .eq("id", gameData.id);
+  
+  if (breakError) {
+    console.error("❌ Failed to set break status:", breakError);
+  } else {
+    console.log("✅ Break period set successfully, ends at:", breakEnd.toISOString());
+  }
 }
 
 async function determineWinner(supabase: any, gameId: string, remainingPlayers: any[]) {
