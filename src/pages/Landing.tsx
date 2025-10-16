@@ -312,7 +312,7 @@ const Landing = () => {
                       variant="outline"
                       className="border-2 border-accent/40 hover:border-accent hover:bg-accent/20 font-mono uppercase tracking-wider"
                     >
-                      Watch Game
+                      Game in progress
                     </Button>
                   </div>
                 )}
