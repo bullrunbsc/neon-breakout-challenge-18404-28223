@@ -488,19 +488,22 @@ const Game = () => {
 
     const interval = setInterval(() => {
       const now = Date.now();
-      const start = new Date(game.started_at).getTime();
-      const diff = Math.max(0, Math.floor((start - now) / 1000));
-      setCountdownTime(diff);
+      const countdownStart = new Date(game.started_at).getTime();
+      const elapsedSeconds = Math.floor((now - countdownStart) / 1000);
+      
+      // Countdown is 1 minute (60 seconds) - show remaining time
+      const remainingSeconds = Math.max(0, 60 - elapsedSeconds);
+      setCountdownTime(remainingSeconds);
       
       // Poll once when countdown reaches 0 to ensure game starts
-      if (diff === 0 && countdownTime > 0) {
+      if (remainingSeconds === 0 && countdownTime > 0) {
         console.log("Countdown reached 0, fetching game update...");
         setTimeout(() => fetchGameData(), 500); // Small delay to let backend process
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [game]);
+  }, [game, countdownTime]);
 
   const handleSubmitAnswer = async () => {
     console.log("Submit clicked. Selected button:", selectedButton, "Current round:", currentRound, "Player:", player);
