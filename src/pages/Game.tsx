@@ -77,13 +77,13 @@ const Game = () => {
     fetchGameData();
     const unsubscribe = subscribeToChanges();
 
-    // Backup polling every 5 seconds during active gameplay to catch missed realtime updates
+    // Backup polling every 2 seconds during active gameplay to catch missed realtime updates
     const pollInterval = setInterval(() => {
       if (game && game.status !== 'waiting' && game.status !== 'finished') {
         console.log("⏰ Backup polling - checking for updates");
         fetchGameData();
       }
-    }, 5000);
+    }, 2000);
 
     return () => {
       if (unsubscribe) unsubscribe();
