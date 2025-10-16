@@ -214,11 +214,11 @@ const Landing = () => {
                       No Game Active
                     </p>
                     <Button 
-                      onClick={() => window.open("https://x.com/WinButtons", "_blank")} 
+                      onClick={() => window.open("https://x.com/GuessButtons", "_blank")} 
                       variant="outline" 
                       className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase tracking-wider"
                     >
-                      Follow @WinButtons
+                      Follow @GuessButtons
                     </Button>
                   </div>
                 )}
@@ -228,11 +228,11 @@ const Landing = () => {
                     <div className="text-primary text-5xl font-black">GAME OVER</div>
                     <p className="text-muted-foreground font-mono">Insert coin for next game</p>
                     <Button 
-                      onClick={() => window.open("https://x.com/WinButtons", "_blank")} 
+                      onClick={() => window.open("https://x.com/GuessButtons", "_blank")} 
                       variant="outline"
                       className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase"
                     >
-                      Follow @WinButtons
+                      Follow @GuessButtons
                     </Button>
                   </div>
                 )}
