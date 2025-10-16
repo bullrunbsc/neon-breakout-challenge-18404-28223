@@ -443,9 +443,10 @@ const Game = () => {
         const diff = Math.max(0, Math.ceil((end - now) / 1000));
         setTimeLeft(diff);
         
-      // When time reaches 0, realtime will handle the transition
-        if (diff === 0) {
-          console.log("Round timer reached 0, waiting for realtime update...");
+      // When time reaches 0, poll once to ensure smooth transition
+        if (diff === 0 && timeLeft > 0) {
+          console.log("Round timer reached 0, fetching game update...");
+          fetchGameData();
         }
       }
     }, 1000);
@@ -462,9 +463,10 @@ const Game = () => {
       const timeLeft = Math.max(0, Math.ceil((breakEndTime.getTime() - now) / 1000));
       setBreakTimeLeft(timeLeft);
       
-      // When break ends, realtime will handle the transition
-      if (timeLeft === 0) {
-        console.log("Break timer reached 0, waiting for realtime update...");
+      // When break ends, poll once to ensure smooth transition
+      if (timeLeft === 0 && breakTimeLeft > 0) {
+        console.log("Break timer reached 0, fetching game update...");
+        fetchGameData();
       }
     }, 1000);
 
@@ -481,9 +483,10 @@ const Game = () => {
       const diff = Math.max(0, Math.floor((start - now) / 1000));
       setCountdownTime(diff);
       
-      // Realtime will handle the transition when countdown reaches 0
-      if (diff === 0) {
-        console.log("Countdown reached 0, waiting for realtime update...");
+      // Poll once when countdown reaches 0 to ensure game starts
+      if (diff === 0 && countdownTime > 0) {
+        console.log("Countdown reached 0, fetching game update...");
+        setTimeout(() => fetchGameData(), 500); // Small delay to let backend process
       }
     }, 100);
 
