@@ -14,16 +14,358 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      answers: {
+        Row: {
+          id: string
+          is_correct: boolean
+          player_id: string
+          round_id: string
+          selected_door: number
+          submitted_at: string
+        }
+        Insert: {
+          id?: string
+          is_correct: boolean
+          player_id: string
+          round_id: string
+          selected_door?: number
+          submitted_at?: string
+        }
+        Update: {
+          id?: string
+          is_correct?: boolean
+          player_id?: string
+          round_id?: string
+          selected_door?: number
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          break_ends_at: string | null
+          created_at: string
+          current_round: number
+          ended_at: string | null
+          id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["game_status"]
+          total_rounds: number
+          updated_at: string
+        }
+        Insert: {
+          break_ends_at?: string | null
+          created_at?: string
+          current_round?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          total_rounds?: number
+          updated_at?: string
+        }
+        Update: {
+          break_ends_at?: string | null
+          created_at?: string
+          current_round?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          total_rounds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payouts: {
+        Row: {
+          amount: string
+          created_at: string
+          id: string
+          transaction_hash: string
+          winner_wallet: string
+        }
+        Insert: {
+          amount: string
+          created_at?: string
+          id?: string
+          transaction_hash: string
+          winner_wallet: string
+        }
+        Update: {
+          amount?: string
+          created_at?: string
+          id?: string
+          transaction_hash?: string
+          winner_wallet?: string
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          eliminated_at: string | null
+          game_id: string
+          id: string
+          joined_at: string
+          status: Database["public"]["Enums"]["player_status"]
+          wallet_address: string
+          winner_rank: number | null
+        }
+        Insert: {
+          eliminated_at?: string | null
+          game_id: string
+          id?: string
+          joined_at?: string
+          status?: Database["public"]["Enums"]["player_status"]
+          wallet_address: string
+          winner_rank?: number | null
+        }
+        Update: {
+          eliminated_at?: string | null
+          game_id?: string
+          id?: string
+          joined_at?: string
+          status?: Database["public"]["Enums"]["player_status"]
+          wallet_address?: string
+          winner_rank?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rounds: {
+        Row: {
+          correct_door: number
+          created_at: string
+          ends_at: string
+          game_id: string
+          id: string
+          round_number: number
+          starts_at: string
+        }
+        Insert: {
+          correct_door?: number
+          created_at?: string
+          ends_at: string
+          game_id: string
+          id?: string
+          round_number: number
+          starts_at: string
+        }
+        Update: {
+          correct_door?: number
+          created_at?: string
+          ends_at?: string
+          game_id?: string
+          id?: string
+          round_number?: number
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rounds_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      players_public: {
+        Row: {
+          eliminated_at: string | null
+          game_id: string | null
+          id: string | null
+          joined_at: string | null
+          status: Database["public"]["Enums"]["player_status"] | null
+        }
+        Insert: {
+          eliminated_at?: string | null
+          game_id?: string | null
+          id?: string | null
+          joined_at?: string | null
+          status?: Database["public"]["Enums"]["player_status"] | null
+        }
+        Update: {
+          eliminated_at?: string | null
+          game_id?: string | null
+          id?: string | null
+          joined_at?: string | null
+          status?: Database["public"]["Enums"]["player_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rounds_safe: {
+        Row: {
+          created_at: string | null
+          ends_at: string | null
+          game_id: string | null
+          id: string | null
+          round_number: number | null
+          starts_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at?: string | null
+          game_id?: string | null
+          id?: string | null
+          round_number?: number | null
+          starts_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string | null
+          game_id?: string | null
+          id?: string | null
+          round_number?: number | null
+          starts_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rounds_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      admin_create_round: {
+        Args: {
+          p_correct_door: number
+          p_ends_at: string
+          p_game_id: string
+          p_round_number: number
+          p_starts_at: string
+        }
+        Returns: {
+          correct_door: number
+          created_at: string
+          ends_at: string
+          game_id: string
+          id: string
+          round_number: number
+          starts_at: string
+        }[]
+      }
+      admin_get_round: {
+        Args: { p_game_id: string; p_round_number: number }
+        Returns: {
+          correct_door: number
+          created_at: string
+          ends_at: string
+          game_id: string
+          id: string
+          round_number: number
+          starts_at: string
+        }[]
+      }
+      get_current_round_safe: {
+        Args: { p_game_id: string }
+        Returns: {
+          created_at: string
+          ends_at: string
+          game_id: string
+          id: string
+          round_number: number
+          starts_at: string
+        }[]
+      }
+      get_round_safe: {
+        Args: { p_game_id: string; p_round_number: number }
+        Returns: {
+          created_at: string
+          ends_at: string
+          game_id: string
+          id: string
+          round_number: number
+          starts_at: string
+        }[]
+      }
+      is_admin: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
+      validate_answer: {
+        Args: {
+          p_player_id: string
+          p_round_id: string
+          p_selected_door: number
+        }
+        Returns: {
+          already_submitted: boolean
+          is_correct: boolean
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      game_status: "waiting" | "countdown" | "active" | "finished" | "break"
+      player_status: "active" | "eliminated" | "winner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +492,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      game_status: ["waiting", "countdown", "active", "finished", "break"],
+      player_status: ["active", "eliminated", "winner"],
+    },
   },
 } as const
