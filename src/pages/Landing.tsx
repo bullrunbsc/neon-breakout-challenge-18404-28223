@@ -9,7 +9,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 const CONTRACT_ADDRESS = "FFPMq7uQ4J26hDrjwHQHd9DhfdsUJmS6v3L4dzHTpump";
 const Landing = () => {
   const navigate = useNavigate();
-  const { ready, authenticated, login } = usePrivy();
+  const { ready, authenticated, login, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentGame, setCurrentGame] = useState<any>(null);
@@ -93,8 +93,19 @@ const Landing = () => {
   const handleJoinGame = async () => {
     console.log("Join game clicked - Debug info:", { ready, authenticated, walletsCount: wallets.length, firstWallet: wallets[0] });
     
-    if (!ready || !authenticated) {
+    if (!ready) {
+      toast.error("Wallet not ready");
+      return;
+    }
+
+    if (!authenticated) {
       login();
+      return;
+    }
+
+    if (wallets.length === 0) {
+      // Need to connect wallet
+      await connectWallet();
       return;
     }
 
@@ -102,7 +113,7 @@ const Landing = () => {
     console.log("Wallet address extracted:", walletAddress);
     
     if (!walletAddress) {
-      toast.error("No wallet connected");
+      toast.error("No wallet address found");
       return;
     }
 
