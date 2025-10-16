@@ -270,13 +270,41 @@ const Landing = () => {
                 )}
 
                 {currentGame?.status === "active" && (
-                  <div className="text-center py-8 space-y-3">
+                  <div className="text-center py-8 space-y-4">
                     <div className="text-accent text-5xl font-black animate-pulse">
                       LIVE
                     </div>
                     <p className="text-foreground font-mono text-xl">
                       Round {currentGame.current_round} / {currentGame.total_rounds}
                     </p>
+                    <Button 
+                      onClick={() => navigate(`/game?gameId=${currentGame.id}&spectate=true`)}
+                      variant="outline"
+                      className="border-2 border-accent/40 hover:border-accent hover:bg-accent/20 font-mono uppercase tracking-wider"
+                    >
+                      Watch Game
+                    </Button>
+                  </div>
+                )}
+
+                {currentGame?.status === "break" && (
+                  <div className="text-center py-8 space-y-4">
+                    <div className="text-primary text-4xl font-black animate-pulse">
+                      BREAK TIME
+                    </div>
+                    <p className="text-muted-foreground font-mono">
+                      Next round starting soon...
+                    </p>
+                    <p className="text-foreground font-mono text-xl">
+                      Round {(currentGame.current_round || 0) + 1} / {currentGame.total_rounds}
+                    </p>
+                    <Button 
+                      onClick={() => navigate(`/game?gameId=${currentGame.id}&spectate=true`)}
+                      variant="outline"
+                      className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase tracking-wider"
+                    >
+                      Watch Game
+                    </Button>
                   </div>
                 )}
 
