@@ -11,7 +11,7 @@ type GameState = "waiting" | "countdown" | "in_round" | "break" | "eliminated" |
 const Game = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const gameId = searchParams.get("gameId");
+  const gameId = searchParams.get("gFameId");
   const wallet = searchParams.get("wallet");
 
   const [gameState, setGameState] = useState<GameState>("waiting");
@@ -653,6 +653,42 @@ const Game = () => {
           player_id: player.id,
           selected_door: selectedButton,
           is_correct: false,
+
+         // Immediately eliminate player and force realtime update
+      const { error: playerError } = await supabase
+        .from("players")
+        .update({
+          status: "eliminated",
+          eliminated_at: new Date().toISOString(),
+        })
+        .eq("id", player.id);
+
+      if (playerError) {
+        console.error("Failed to update player status:", playerError);
+      } else {
+        // ✅ Force state update locally so UI + admin panel refresh instantly
+        setPlayer((prev: any) => ({ ...prev, status: "eliminated" }));
+        setGameState("eliminated");
+
+        // Realtime trigger should fire for admin immediately
+        await supabase
+          .channel("players-status")
+          .send({
+            type: "broadcast",
+            event: "player_eliminated",
+            payload: { game_id: gameId, player_id: player.id },
+          });
+
+        toast.error("✗ Wrong answer! You've been eliminated.");
+      }
+
+      setHasSubmitted(true);
+      setSubmissionResult("wrong");
+      
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
         });
 
       if (answerError) {
