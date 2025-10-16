@@ -230,10 +230,16 @@ async function checkAnswersAndEliminate(supabase: any, roundId: string, roundNum
     return;
   }
 
-  if (remainingPlayers.length <= 3 || roundNumber >= gameData.total_rounds) {
-    console.log("Determining winners");
+  // Only determine winners if we've completed all rounds
+  if (roundNumber >= gameData.total_rounds) {
+    console.log("All rounds completed, determining winners");
     await determineWinner(supabase, gameData.id, remainingPlayers);
     return;
+  }
+  
+  // If 3 or fewer players remain but rounds aren't complete, continue to next round
+  if (remainingPlayers.length <= 3) {
+    console.log(`Only ${remainingPlayers.length} players remain, but continuing to complete all rounds`);
   }
 
   // Start break period before next round

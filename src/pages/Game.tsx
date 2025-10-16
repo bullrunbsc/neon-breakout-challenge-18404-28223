@@ -730,17 +730,40 @@ const Game = () => {
 
   if (gameState === "eliminated") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-destructive/20 via-background to-background">
-        <div className="text-center space-y-6">
-          <h1 className="text-9xl font-black game-over-glow">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-destructive/20 via-background to-background relative overflow-hidden">
+        {/* Arcade Background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 scanlines opacity-20" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/10 rounded-full blur-[150px] animate-pulse" />
+        </div>
+        
+        <div className="text-center space-y-8 relative z-10 px-4">
+          <h1 className="text-7xl md:text-9xl font-black uppercase tracking-wider" style={{
+            color: "hsl(0 85% 58%)",
+            textShadow: `
+              0 0 20px hsl(0 85% 58%),
+              0 0 40px hsl(0 85% 58%),
+              0 0 80px hsl(0 85% 58%),
+              4px 4px 0px hsl(0 85% 58% / 0.5)
+            `,
+            fontFamily: "'Press Start 2P', 'Orbitron', monospace"
+          }}>
             GAME OVER
           </h1>
-          <p className="text-2xl text-muted-foreground">
-            You have been eliminated
-          </p>
-          <p className="text-lg text-muted-foreground/70 animate-pulse">
-            Redirecting to home in a few seconds...
-          </p>
+          
+          <div className="space-y-4">
+            <p className="text-3xl font-bold text-foreground font-mono uppercase tracking-wider">
+              You Have Been Eliminated
+            </p>
+            
+            <div className="flex items-center justify-center gap-2 text-muted-foreground font-mono">
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              <p className="text-lg animate-pulse">
+                Redirecting to home...
+              </p>
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -825,41 +848,103 @@ const Game = () => {
 
         {/* Game Status */}
         {game?.status === "waiting" && (
-          <div className="neon-border rounded-2xl p-12 bg-card text-center space-y-6">
-            <p className="text-3xl font-bold text-primary animate-pulse-slow">
-              Waiting for game to start...
-            </p>
-            <Button
-              onClick={fetchGameData}
-              variant="outline"
-              className="mt-4"
-            >
-              Refresh Status
-            </Button>
+          <div className="relative neon-border rounded-2xl p-12 bg-card text-center space-y-6 overflow-hidden">
+            {/* Arcade Background Effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 scanlines opacity-20" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+            </div>
+            
+            <div className="relative z-10 space-y-6">
+              <div className="text-5xl font-black text-primary animate-pulse uppercase tracking-wider" style={{
+                fontFamily: "'Press Start 2P', 'Orbitron', monospace",
+                textShadow: "0 0 20px hsl(145 80% 50%), 0 0 40px hsl(145 80% 50%)"
+              }}>
+                LOADING
+              </div>
+              
+              <div className="flex justify-center gap-3">
+                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              
+              <p className="text-lg text-muted-foreground font-mono uppercase tracking-wider">
+                Admin will start game soon
+              </p>
+              
+              <Button
+                onClick={fetchGameData}
+                variant="outline"
+                className="border-2 border-primary/40 hover:border-primary hover:bg-primary/20 font-mono uppercase tracking-wider"
+              >
+                ► Refresh Status
+              </Button>
+            </div>
           </div>
         )}
 
         {game?.status === "countdown" && (
-          <div className="neon-border rounded-2xl p-12 bg-card text-center space-y-6">
-            <p className="text-2xl text-muted-foreground">Game starts in</p>
-            <p className="text-9xl font-black neon-glow tabular-nums">
-              {formatCountdown(countdownTime)}
-            </p>
-            <p className="text-3xl text-primary animate-pulse">
-              GET READY
-            </p>
+          <div className="relative neon-border rounded-2xl p-12 bg-card text-center space-y-6 overflow-hidden">
+            {/* Arcade Background Effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 scanlines opacity-20" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+            </div>
+            
+            <div className="relative z-10 space-y-6">
+              <p className="text-2xl text-muted-foreground font-mono uppercase tracking-wider">Game Starts In</p>
+              <p className="text-9xl font-black tabular-nums" style={{
+                color: "hsl(145 80% 50%)",
+                textShadow: `
+                  0 0 20px hsl(145 80% 50%),
+                  0 0 40px hsl(145 80% 50%),
+                  0 0 80px hsl(145 80% 50%)
+                `
+              }}>
+                {formatCountdown(countdownTime)}
+              </p>
+              <p className="text-4xl text-primary animate-pulse font-black uppercase tracking-wider" style={{
+                fontFamily: "'Press Start 2P', 'Orbitron', monospace"
+              }}>
+                GET READY
+              </p>
+            </div>
           </div>
         )}
 
         {game?.status === "break" && (
-          <div className="neon-border rounded-2xl p-12 bg-card text-center space-y-6">
-            <p className="text-2xl text-muted-foreground">Round {game.current_round} Complete!</p>
-            <p className="text-9xl font-black neon-glow animate-pulse">
-              {breakTimeLeft}
-            </p>
-            <p className="text-3xl text-primary">
-              Next round starting soon...
-            </p>
+          <div className="relative neon-border rounded-2xl p-12 bg-card text-center space-y-6 overflow-hidden">
+            {/* Arcade Background Effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 scanlines opacity-20" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-accent/10 rounded-full blur-[100px] animate-pulse" />
+            </div>
+            
+            <div className="relative z-10 space-y-6">
+              <div className="text-4xl font-black uppercase tracking-wider" style={{
+                color: "hsl(145 80% 50%)",
+                textShadow: "0 0 20px hsl(145 80% 50%)"
+              }}>
+                ✓ Round {game.current_round} Complete!
+              </div>
+              
+              <div className="text-9xl font-black tabular-nums animate-pulse" style={{
+                color: "hsl(145 80% 50%)",
+                textShadow: `
+                  0 0 30px hsl(145 80% 50%),
+                  0 0 60px hsl(145 80% 50%)
+                `
+              }}>
+                {breakTimeLeft}
+              </div>
+              
+              <p className="text-3xl text-primary font-bold uppercase tracking-wider" style={{
+                fontFamily: "'Press Start 2P', 'Orbitron', monospace"
+              }}>
+                Next Round Soon
+              </p>
+            </div>
           </div>
         )}
 
