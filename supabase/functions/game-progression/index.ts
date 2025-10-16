@@ -52,9 +52,11 @@ serve(async (req) => {
 
     // Handle countdown status
     if (gameData.status === "countdown" && gameData.started_at) {
-      const countdownEndTime = new Date(gameData.started_at);
+      const countdownStartTime = new Date(gameData.started_at);
+      const elapsedMinutes = (now.getTime() - countdownStartTime.getTime()) / (1000 * 60);
       
-      if (now > countdownEndTime) {
+      // Game should start after 1 minute countdown (configurable in future)
+      if (elapsedMinutes >= 1) {
         console.log("Countdown ended, starting round 1");
         
         // Get correct door from game round_config

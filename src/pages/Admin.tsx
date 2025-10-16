@@ -342,8 +342,8 @@ const Admin = () => {
       roundConfig[`round_${i + 1}`] = correctDoors[i];
     }
 
+    // Set started_at to current time - countdown logic will be handled by checking elapsed time
     const startTime = new Date();
-    startTime.setMinutes(startTime.getMinutes() + countdownMinutes);
 
     const { error } = await supabase
       .from("games")
@@ -359,7 +359,7 @@ const Admin = () => {
       return;
     }
 
-    toast.success(`Countdown started! Game will auto-progress in ${countdownMinutes} minutes`);
+    toast.success(`Countdown started! Game will auto-start in ${countdownMinutes} minute(s)`);
   };
 
   const startNextRoundDirect = async (gameData: any, nextRound: number, correctDoor: number) => {
