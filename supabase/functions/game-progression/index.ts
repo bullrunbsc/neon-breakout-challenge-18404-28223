@@ -14,7 +14,12 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
     console.log("Checking for game progression...");
 
@@ -86,18 +91,19 @@ serve(async (req) => {
     // Handle active round - check if expired
     if (gameData.status === "active" && gameData.current_round > 0) {
       const { data: currentRoundData } = await supabase
-        .rpc("admin_get_round", {
-          p_game_id: gameData.id,
-          p_round_number: gameData.current_round,
-        });
+        .from("rounds")
+        .select("*")
+        .eq("game_id", gameData.id)
+        .eq("round_number", gameData.current_round)
+        .single();
 
-      if (currentRoundData && currentRoundData.length > 0) {
-        const endTime = new Date(currentRoundData[0].ends_at);
+      if (currentRoundData) {
+        const endTime = new Date(currentRoundData.ends_at);
         
         if (now > endTime) {
           console.log("Round expired, processing eliminations");
-          await checkAnswersAndEliminate(supabase, currentRoundData[0].id, currentRoundData[0].round_number, gameData);
-          action = `processed_round_${currentRoundData[0].round_number}`;
+          await checkAnswersAndEliminate(supabase, currentRoundData.id, currentRoundData.round_number, gameData);
+          action = `processed_round_${currentRoundData.round_number}`;
         }
       }
     }
@@ -121,14 +127,16 @@ async function startRound(supabase: any, gameId: string, roundNumber: number, co
   const roundStart = new Date();
   const roundEnd = new Date(roundStart.getTime() + 15000); // 15 seconds
 
-  // Create round
-  const { error: roundError } = await supabase.rpc("admin_create_round", {
-    p_game_id: gameId,
-    p_round_number: roundNumber,
-    p_correct_door: correctDoor,
-    p_starts_at: roundStart.toISOString(),
-    p_ends_at: roundEnd.toISOString(),
-  });
+  // Create round directly using service role
+  const { error: roundError } = await supabase
+    .from("rounds")
+    .insert({
+      game_id: gameId,
+      round_number: roundNumber,
+      correct_door: correctDoor,
+      starts_at: roundStart.toISOString(),
+      ends_at: roundEnd.toISOString(),
+    });
 
   if (roundError) {
     console.error("Failed to create round:", roundError);
