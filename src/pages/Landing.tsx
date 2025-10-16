@@ -91,12 +91,16 @@ const Landing = () => {
     toast.success("Contract address copied!");
   };
   const handleJoinGame = async () => {
+    console.log("Join game clicked - Debug info:", { ready, authenticated, walletsCount: wallets.length, firstWallet: wallets[0] });
+    
     if (!ready || !authenticated) {
       login();
       return;
     }
 
     const walletAddress = wallets[0]?.address;
+    console.log("Wallet address extracted:", walletAddress);
+    
     if (!walletAddress) {
       toast.error("No wallet connected");
       return;
@@ -232,13 +236,17 @@ const Landing = () => {
 
             {/* Join Form */}
             {currentGame && (currentGame.status === "waiting" || currentGame.status === "countdown") && <div className="space-y-4">
-                {authenticated && wallets[0]?.address && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                <div className="space-y-2 text-center">
+                  {authenticated && wallets.length > 0 && wallets[0]?.address ? (
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       Connected: {wallets[0].address.slice(0, 4)}...{wallets[0].address.slice(-4)}
                     </p>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {!ready ? "Loading wallet..." : !authenticated ? "Click to connect wallet" : "Wallet not detected"}
+                    </p>
+                  )}
+                </div>
                 <Button onClick={handleJoinGame} className="relative w-full h-14 text-lg font-bold rounded-full overflow-hidden group border-2 border-primary/50" style={{
               background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
               boxShadow: "0 0 40px hsl(145 80% 50% / 0.4), 0 10px 60px -10px hsl(145 80% 50% / 0.6)"
