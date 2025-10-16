@@ -91,15 +91,26 @@ const Landing = () => {
     toast.success("Contract address copied!");
   };
   const handleJoinGame = async () => {
-    if (!ready || !authenticated || wallets.length === 0) {
+    console.log("🔍 Join game state:", { ready, authenticated, wallets });
+    
+    if (!ready) {
+      toast.error("Privy not ready");
+      console.log("❌ Privy not ready");
+      return;
+    }
+
+    if (!authenticated || wallets.length === 0) {
+      console.log("🔐 Calling login()");
       login();
       return;
     }
 
     const walletAddress = wallets[0]?.address;
+    console.log("💳 Wallet address:", walletAddress);
     
     if (!walletAddress) {
-      toast.error("No wallet connected");
+      toast.error("No wallet address found");
+      console.log("❌ No wallet address");
       return;
     }
 
