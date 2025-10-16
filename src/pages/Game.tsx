@@ -126,6 +126,27 @@ const Game = () => {
     }
   }, [gameState, player?.status, navigate]);
 
+  // Periodic game progression check via edge function
+  useEffect(() => {
+    if (!gameId) return;
+
+    const checkProgression = async () => {
+      try {
+        await supabase.functions.invoke('game-progression');
+      } catch (error) {
+        console.error('Error checking game progression:', error);
+      }
+    };
+
+    // Check immediately
+    checkProgression();
+
+    // Then check every 3 seconds
+    const interval = setInterval(checkProgression, 3000);
+
+    return () => clearInterval(interval);
+  }, [gameId]);
+
   const fetchGameData = async () => {
     // Don't fetch if player is already a winner or eliminated - prevents glitching
     if (gameState === "winner" || player?.status === "winner" || gameState === "eliminated" || player?.status === "eliminated") {
