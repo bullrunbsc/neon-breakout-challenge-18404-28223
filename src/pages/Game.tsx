@@ -86,32 +86,9 @@ const Game = () => {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    
-    // Only auto-refresh when not submitted and not a winner
-    let refreshInterval: NodeJS.Timeout | null = null;
-    let progressionInterval: NodeJS.Timeout | null = null;
-    
-    if (!hasSubmitted && gameState !== "winner") {
-      refreshInterval = setInterval(() => {
-        if (gameState !== "in_round") {
-          fetchGameData();
-        }
-      }, 3000);
-      
-      // Trigger game progression check every 3 seconds
-      progressionInterval = setInterval(async () => {
-        try {
-          await supabase.functions.invoke('game-progression');
-        } catch (error) {
-          console.error("Error triggering game progression:", error);
-        }
-      }, 3000);
-    }
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      if (refreshInterval) clearInterval(refreshInterval);
-      if (progressionInterval) clearInterval(progressionInterval);
     };
   }, [gameId, wallet, hasSubmitted, gameState]);
 
@@ -126,26 +103,6 @@ const Game = () => {
     }
   }, [gameState, player?.status, navigate]);
 
-  // Periodic game progression check via edge function
-  useEffect(() => {
-    if (!gameId) return;
-
-    const checkProgression = async () => {
-      try {
-        await supabase.functions.invoke('game-progression');
-      } catch (error) {
-        console.error('Error checking game progression:', error);
-      }
-    };
-
-    // Check immediately
-    checkProgression();
-
-    // Then check every 3 seconds
-    const interval = setInterval(checkProgression, 3000);
-
-    return () => clearInterval(interval);
-  }, [gameId]);
 
   const fetchGameData = async () => {
     // Don't fetch if player is already a winner or eliminated - prevents glitching
