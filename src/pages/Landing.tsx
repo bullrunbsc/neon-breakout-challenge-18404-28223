@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
+import { PublicKey } from "@solana/web3.js";
 
 const CONTRACT_ADDRESS = "FFPMq7uQ4J26hDrjwHQHd9DhfdsUJmS6v3L4dzHTpump";
 const Landing = () => {
@@ -13,6 +14,17 @@ const Landing = () => {
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [walletAddress, setWalletAddress] = useState("");
+  const [isValidAddress, setIsValidAddress] = useState(false);
+
+  const validateSolanaAddress = (address: string): boolean => {
+    if (!address || address.trim() === "") return false;
+    try {
+      new PublicKey(address);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   // Keyboard shortcut for admin panel (Ctrl+Shift+A)
   useEffect(() => {
@@ -90,8 +102,8 @@ const Landing = () => {
     toast.success("Contract address copied!");
   };
   const handleJoinGame = async () => {
-    if (!walletAddress.trim()) {
-      toast.error("Enter your wallet address");
+    if (!isValidAddress) {
+      toast.error("Please enter a valid Solana wallet address");
       return;
     }
 
@@ -279,14 +291,26 @@ const Landing = () => {
                         type="text"
                         placeholder="Your Solana wallet address"
                         value={walletAddress}
-                        onChange={(e) => setWalletAddress(e.target.value)}
-                        className="h-12 bg-input/80 border-2 border-border/50 focus:border-primary font-mono text-sm"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setWalletAddress(value);
+                          setIsValidAddress(validateSolanaAddress(value));
+                        }}
+                        className={`h-12 bg-input/80 border-2 ${
+                          walletAddress && !isValidAddress
+                            ? "border-red-500/50 focus:border-red-500"
+                            : "border-border/50 focus:border-primary"
+                        } font-mono text-sm`}
                       />
+                      {walletAddress && !isValidAddress && (
+                        <p className="text-xs text-red-500 font-mono">Invalid Solana wallet address</p>
+                      )}
                     </div>
                     
                     <Button 
                       onClick={handleJoinGame}
-                      className="w-full h-14 text-lg font-black rounded-xl border-4 border-primary/50 uppercase tracking-wider relative overflow-hidden group"
+                      disabled={!isValidAddress}
+                      className="w-full h-14 text-lg font-black rounded-xl border-4 border-primary/50 uppercase tracking-wider relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         background: "linear-gradient(135deg, hsl(145 80% 50%), hsl(145 100% 60%))",
                         boxShadow: "0 0 40px hsl(145 80% 50% / 0.5)",
