@@ -84,14 +84,7 @@ const Admin = () => {
 
     fetchGameData();
     subscribeToChanges();
-    
-    // Check for expired rounds every 2 seconds
-    const interval = setInterval(() => {
-      checkForExpiredRounds();
-    }, 2000);
-    
-    return () => clearInterval(interval);
-  }, [isAdmin, correctDoors]); // Add dependencies
+  }, [isAdmin]); // Removed correctDoors dependency and checkForExpiredRounds - now handled by backend
 
   const checkForExpiredRounds = async () => {
     // Get the current game (any status) - fetch fresh data, don't rely on state
@@ -316,11 +309,18 @@ const Admin = () => {
   };
 
   const handleCreateGame = async () => {
+    // Build round config from correctDoors state
+    const roundConfig: any = {};
+    for (let i = 0; i < 5; i++) {
+      roundConfig[`round_${i + 1}`] = correctDoors[i];
+    }
+
     const { error } = await supabase
       .from("games")
       .insert({
         status: "waiting",
         current_round: 0,
+        round_config: roundConfig,
       });
 
     if (error) {
@@ -336,6 +336,12 @@ const Admin = () => {
   const handleStartCountdown = async () => {
     if (!currentGame) return;
 
+    // Build round config from correctDoors state
+    const roundConfig: any = {};
+    for (let i = 0; i < 5; i++) {
+      roundConfig[`round_${i + 1}`] = correctDoors[i];
+    }
+
     const startTime = new Date();
     startTime.setMinutes(startTime.getMinutes() + countdownMinutes);
 
@@ -344,6 +350,7 @@ const Admin = () => {
       .update({
         status: "countdown",
         started_at: startTime.toISOString(),
+        round_config: roundConfig,
       })
       .eq("id", currentGame.id);
 
@@ -352,22 +359,7 @@ const Admin = () => {
       return;
     }
 
-    toast.success(`Countdown started! Game will begin in ${countdownMinutes} minutes`);
-    
-    // Fallback: Also use setTimeout in case checkForExpiredRounds isn't running
-    setTimeout(async () => {
-      // Check if still in countdown status
-      const { data: checkGame } = await supabase
-        .from("games")
-        .select("status")
-        .eq("id", currentGame.id)
-        .single();
-      
-      if (checkGame?.status === "countdown") {
-        console.log("Fallback: Starting round 1 via setTimeout");
-        await startNextRound();
-      }
-    }, countdownMinutes * 60000);
+    toast.success(`Countdown started! Game will auto-progress in ${countdownMinutes} minutes`);
   };
 
   const startNextRoundDirect = async (gameData: any, nextRound: number, correctDoor: number) => {

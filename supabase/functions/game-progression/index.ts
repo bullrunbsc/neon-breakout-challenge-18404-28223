@@ -51,8 +51,8 @@ serve(async (req) => {
       if (now > countdownEndTime) {
         console.log("Countdown ended, starting round 1");
         
-        // Get correct door from game config (stored as JSONB)
-        const correctDoor = 1; // Default, should come from admin config
+        // Get correct door from game round_config
+        const correctDoor = gameData.round_config?.round_1 || 1;
         
         await startRound(supabase, gameData.id, 1, correctDoor);
         action = "started_round_1";
@@ -75,7 +75,8 @@ serve(async (req) => {
           );
         }
         
-        const correctDoor = 1; // Default, should come from admin config
+        // Get correct door from game round_config
+        const correctDoor = gameData.round_config?.[`round_${nextRound}`] || 1;
         
         await startRound(supabase, gameData.id, nextRound, correctDoor);
         action = `started_round_${nextRound}`;
