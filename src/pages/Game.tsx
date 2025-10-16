@@ -491,14 +491,15 @@ const Game = () => {
       const countdownStart = new Date(game.started_at).getTime();
       const elapsedSeconds = Math.floor((now - countdownStart) / 1000);
       
-      // Countdown is 1 minute (60 seconds) - show remaining time
-      const remainingSeconds = Math.max(0, 60 - elapsedSeconds);
+      // Use admin-set countdown duration (defaults to 1 minute)
+      const countdownDuration = (game.countdown_minutes || 1) * 60;
+      const remainingSeconds = Math.max(0, countdownDuration - elapsedSeconds);
       setCountdownTime(remainingSeconds);
       
       // Poll once when countdown reaches 0 to ensure game starts
       if (remainingSeconds === 0 && countdownTime > 0) {
         console.log("Countdown reached 0, fetching game update...");
-        setTimeout(() => fetchGameData(), 500); // Small delay to let backend process
+        setTimeout(() => fetchGameData(), 1000);
       }
     }, 100);
 

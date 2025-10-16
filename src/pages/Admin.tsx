@@ -351,6 +351,7 @@ const Admin = () => {
         status: "countdown",
         started_at: startTime.toISOString(),
         round_config: roundConfig,
+        countdown_minutes: countdownMinutes,
       })
       .eq("id", currentGame.id);
 

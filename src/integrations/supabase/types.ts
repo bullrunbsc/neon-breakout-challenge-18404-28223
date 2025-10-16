@@ -91,6 +91,7 @@ export type Database = {
       games: {
         Row: {
           break_ends_at: string | null
+          countdown_minutes: number | null
           created_at: string
           current_round: number
           ended_at: string | null
@@ -103,6 +104,7 @@ export type Database = {
         }
         Insert: {
           break_ends_at?: string | null
+          countdown_minutes?: number | null
           created_at?: string
           current_round?: number
           ended_at?: string | null
@@ -115,6 +117,7 @@ export type Database = {
         }
         Update: {
           break_ends_at?: string | null
+          countdown_minutes?: number | null
           created_at?: string
           current_round?: number
           ended_at?: string | null
